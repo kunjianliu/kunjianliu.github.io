@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>ASP.NET Core 中 FromForm 与 FromBody 的区别和常见坑 | simple focus</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="这篇文章基于一个真实的问题：“控制器方法参数里 [FromForm] 和 [FromBody] 有什么区别？为什么接口收不到上传的图片？”。我们从 概念 → HTTP 层面 → ASP.NET Core 参数绑定 → 排查步骤 四个角度，把这两个特性讲清楚，并顺带梳理一遍文件上传的常见坑。      结论先行 基本概念：FromBody 与 FromForm 分别做什么？ 1. [FromBody">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ASP.NET Core 中 FromForm 与 FromBody 的区别和常见坑">
+<meta property="og:url" content="http://example.com/2026/02/11/ASP.NET-Core-FromForm-%E4%B8%8E-FromBody-%E5%8C%BA%E5%88%AB%E5%92%8C%E5%B8%B8%E8%A7%81%E5%9D%91/index.html">
+<meta property="og:site_name" content="simple focus">
+<meta property="og:description" content="这篇文章基于一个真实的问题：“控制器方法参数里 [FromForm] 和 [FromBody] 有什么区别？为什么接口收不到上传的图片？”。我们从 概念 → HTTP 层面 → ASP.NET Core 参数绑定 → 排查步骤 四个角度，把这两个特性讲清楚，并顺带梳理一遍文件上传的常见坑。      结论先行 基本概念：FromBody 与 FromForm 分别做什么？ 1. [FromBody">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-02-10T16:00:00.000Z">
+<meta property="article:modified_time" content="2026-02-11T14:30:30.403Z">
+<meta property="article:author" content="kunjianliu">
+<meta property="article:tag" content="ASP.NET Core">
+<meta property="article:tag" content="FromBody">
+<meta property="article:tag" content="FromForm">
+<meta property="article:tag" content="Web API">
+<meta property="article:tag" content="文件上传">
+<meta name="twitter:card" content="summary">
+  
+    <link rel="alternate" href="/atom.xml" title="simple focus" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+  
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fork-awesome@1.2.0/css/fork-awesome.min.css">
+
+<meta name="generator" content="Hexo 8.1.1"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">simple focus</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"><span class="fa fa-bars"></span></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+        
+          <a class="nav-icon" href="/atom.xml" title="RSS 订阅"><span class="fa fa-rss"></span></a>
+        
+        <a class="nav-icon nav-search-btn" title="搜索"><span class="fa fa-search"></span></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="搜索"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://example.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-ASP.NET-Core-FromForm-与-FromBody-区别和常见坑" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2026/02/11/ASP.NET-Core-FromForm-%E4%B8%8E-FromBody-%E5%8C%BA%E5%88%AB%E5%92%8C%E5%B8%B8%E8%A7%81%E5%9D%91/" class="article-date">
+  <time class="dt-published" datetime="2026-02-10T16:00:00.000Z" itemprop="datePublished">2026-02-11</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/%E7%BC%96%E7%A8%8B%E5%AE%9E%E8%B7%B5/">编程实践</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      ASP.NET Core 中 FromForm 与 FromBody 的区别和常见坑
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>这篇文章基于一个真实的问题：“控制器方法参数里 <code>[FromForm]</code> 和 <code>[FromBody]</code> 有什么区别？为什么接口收不到上传的图片？”。<br>我们从 <strong>概念 → HTTP 层面 → ASP.NET Core 参数绑定 → 排查步骤</strong> 四个角度，把这两个特性讲清楚，并顺带梳理一遍文件上传的常见坑。</p>
+<div class="toc">
+
+<!-- toc -->
+
+<ul>
+<li><a href="#jie-lun-xian-xing">结论先行</a></li>
+<li><a href="#ji-ben-gai-nian-frombody-yu-fromform-fen-bie-zuo-shi-me">基本概念：FromBody 与 FromForm 分别做什么？</a><ul>
+<li><a href="#1-frombody-cong-qing-qiu-ti-zhong-du-qu-jie-gou-hua-shu-ju">1. <code>[FromBody]</code> —— 从请求体中读取结构化数据</a></li>
+<li><a href="#2-fromform-cong-biao-dan-shu-ju-zhong-du-qu-zi-duan-he-wen-jian">2. <code>[FromForm]</code> —— 从表单数据中读取字段和文件</a></li>
+</ul>
+</li>
+<li><a href="#zai-http-ceng-mian-ta-men-dao-di-chang-shi-me-yang">◆ 在 HTTP 层面，它们到底长什么样？</a><ul>
+<li><a href="#1-fromform-multipart-form-data-duo-bu-fen-qing-qiu-biao-dan-wen-jian">1. <code>[FromForm]</code>：<code>multipart/form-data</code> 多部分请求（表单 + 文件）</a></li>
+<li><a href="#2-frombody-application-json-chun-wen-ben-qing-qiu">2. <code>[FromBody]</code>：<code>application/json</code> 纯文本请求</a></li>
+</ul>
+</li>
+<li><a href="#zai-diao-shi-gong-ju-li-ta-men-fen-bie-zen-me-chang-xiang">在调试工具里，它们分别怎么“长相”？</a></li>
+<li><a href="#dian-xing-cai-keng-wei-shi-me-hou-duan-shou-bu-dao-tu-pian">典型踩坑：为什么后端收不到图片？</a><ul>
+<li><a href="#1-postman-can-shu-lei-xing-she-zhi-cuo-wu-zui-chang-jian">1. Postman 参数类型设置错误（最常见）</a></li>
+<li><a href="#2-qing-qiu-mo-xing-li-bu-gai-zai-ding-yi-wen-jian-shu-xing">2. 请求模型里不该再定义文件属性</a></li>
+<li><a href="#3-wen-jian-da-xiao-xian-zhi-pei-zhi-wen-ti">3. 文件大小限制 &#x2F; 配置问题</a></li>
+<li><a href="#4-que-shao-ri-zhi-wu-fa-que-ren-dao-di-shou-dao-liao-shi-me">4. 缺少日志，无法确认“到底收到了什么”</a></li>
+</ul>
+</li>
+<li><a href="#shi-zhan-xiao-jie-ru-he-xuan-yong-fromform-frombody">实战小结：如何选用 FromForm &#x2F; FromBody？</a></li>
+</ul>
+<!-- tocstop -->
+
+</div>
+
+<h2><span id="jie-lun-xian-xing">结论先行</span><a href="#jie-lun-xian-xing" class="header-anchor">#</a></h2><ul>
+<li><p><strong>核心区别一句话版</strong>：  </p>
+<ul>
+<li><code>[FromBody]</code>：从 <strong>HTTP 请求正文 Body</strong> 里读数据，通常是 <strong>JSON&#x2F;XML</strong> 这类结构化文本，<strong>不适合文件上传</strong>。  </li>
+<li><code>[FromForm]</code>：从 <strong>表单数据</strong>（<code>application/x-www-form-urlencoded</code> &#x2F; <code>multipart/form-data</code>）里读数据，<strong>可以同时绑定普通字段和文件（<code>IFormFile</code>）</strong>。</li>
+</ul>
+</li>
+<li><p><strong>实践建议</strong>：  </p>
+<ul>
+<li>只传 JSON &#x2F; 查询条件 → 用 <code>[FromBody]</code> 接收一个请求对象即可。  </li>
+<li>既传字段又传文件（图片、附件） → 用 <code>[FromForm]</code>，并用 <code>IFormFile</code> &#x2F; <code>List&lt;IFormFile&gt;</code> 接收文件。  </li>
+<li>REST 风格 API，<strong>纯数据</strong> 优先 <code>[FromBody]</code>，<strong>带文件</strong> 必须 <code>[FromForm]</code>。</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h2><span id="ji-ben-gai-nian-frombody-yu-fromform-fen-bie-zuo-shi-me">基本概念：FromBody 与 FromForm 分别做什么？</span><a href="#ji-ben-gai-nian-frombody-yu-fromform-fen-bie-zuo-shi-me" class="header-anchor">#</a></h2><h3><span id="1-frombody-cong-qing-qiu-ti-zhong-du-qu-jie-gou-hua-shu-ju">1. <code>[FromBody]</code> —— 从请求体中读取结构化数据</span><a href="#1-frombody-cong-qing-qiu-ti-zhong-du-qu-jie-gou-hua-shu-ju" class="header-anchor">#</a></h3><ul>
+<li><strong>作用</strong>：从 HTTP 请求的 <strong>Body</strong> 中反序列化请求对象。  </li>
+<li><strong>典型数据格式</strong>：<code>application/json</code>、<code>application/xml</code>。  </li>
+<li><strong>使用场景</strong>：  <ul>
+<li>查询列表：分页 + 筛选条件  </li>
+<li>创建 &#x2F; 更新某个资源的请求对象</li>
+</ul>
+</li>
+</ul>
+<p>示例：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">async</span> Task&lt;ExecuteResult&lt;PagedList&lt;CustomerDemand&gt;&gt;&gt; GetCustomerDemandList(</span><br><span class="line">    [<span class="meta">FromBody</span>] QueryCustomerDemandRequest request)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// request 来自 JSON Body</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在 HTTP 层面，对应的请求大致是：</p>
+<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">POST</span> <span class="string">/api/GetCustomerDemandList</span> <span class="meta">HTTP/1.1</span></span><br><span class="line"><span class="attribute">Content-Type</span><span class="punctuation">: </span>application/json</span><br><span class="line"></span><br><span class="line"><span class="language-json"><span class="punctuation">&#123;</span></span></span><br><span class="line"><span class="language-json">  <span class="attr">&quot;pageNumber&quot;</span><span class="punctuation">:</span> <span class="number">1</span><span class="punctuation">,</span></span></span><br><span class="line"><span class="language-json">  <span class="attr">&quot;pageSize&quot;</span><span class="punctuation">:</span> <span class="number">20</span><span class="punctuation">,</span></span></span><br><span class="line"><span class="language-json">  <span class="attr">&quot;status&quot;</span><span class="punctuation">:</span> <span class="number">0</span><span class="punctuation">,</span></span></span><br><span class="line"><span class="language-json">  <span class="attr">&quot;startTime&quot;</span><span class="punctuation">:</span> <span class="string">&quot;2024-01-01&quot;</span><span class="punctuation">,</span></span></span><br><span class="line"><span class="language-json">  <span class="attr">&quot;endTime&quot;</span><span class="punctuation">:</span> <span class="string">&quot;2024-12-31&quot;</span></span></span><br><span class="line"><span class="language-json"><span class="punctuation">&#125;</span></span></span><br></pre></td></tr></table></figure>
+
+<h3><span id="2-fromform-cong-biao-dan-shu-ju-zhong-du-qu-zi-duan-he-wen-jian">2. <code>[FromForm]</code> —— 从表单数据中读取字段和文件</span><a href="#2-fromform-cong-biao-dan-shu-ju-zhong-du-qu-zi-duan-he-wen-jian" class="header-anchor">#</a></h3><ul>
+<li><strong>作用</strong>：从 <strong>表单数据</strong> 中进行模型绑定。  </li>
+<li><strong>典型数据格式</strong>：  <ul>
+<li><code>application/x-www-form-urlencoded</code>  </li>
+<li><code>multipart/form-data</code>（<strong>文件上传必须用这个</strong>）</li>
+</ul>
+</li>
+<li><strong>特殊能力</strong>：可以直接绑定 <code>IFormFile</code> &#x2F; <code>List&lt;IFormFile&gt;</code>，用于文件上传。</li>
+</ul>
+<p>示例：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> 创建客户需求</span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">[<span class="meta">HttpPost(<span class="string">&quot;AddCustomerDemand&quot;</span>)</span>]</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">async</span> Task&lt;ExecuteResult&lt;<span class="built_in">long</span>&gt;&gt; AddCustomerDemand(</span><br><span class="line">    [<span class="meta">FromForm</span>] AddCustomerDemandRequest request,</span><br><span class="line">    [<span class="meta">FromForm</span>] List&lt;IFormFile&gt;? photos)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">await</span> _customerDemandService.AddCustomerDemandAsync(request, photos);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这个接口既要接收业务字段（需求标题、内容、客户名等），又要接收多张图片文件，所以选择 <code>[FromForm]</code> 是正确的。</p>
+<h2><span id="zai-http-ceng-mian-ta-men-dao-di-chang-shi-me-yang">◆ 在 HTTP 层面，它们到底长什么样？</span><a href="#zai-http-ceng-mian-ta-men-dao-di-chang-shi-me-yang" class="header-anchor">#</a></h2><h3><span id="1-fromform-multipart-form-data-duo-bu-fen-qing-qiu-biao-dan-wen-jian">1. <code>[FromForm]</code>：<code>multipart/form-data</code> 多部分请求（表单 + 文件）</span><a href="#1-fromform-multipart-form-data-duo-bu-fen-qing-qiu-biao-dan-wen-jian" class="header-anchor">#</a></h3><p>典型 HTTP 请求头：</p>
+<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">POST</span> <span class="string">/api/AddCustomerDemand</span> <span class="meta">HTTP/1.1</span></span><br><span class="line"><span class="attribute">Content-Type</span><span class="punctuation">: </span>multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW</span><br></pre></td></tr></table></figure>
+
+<p>请求体（简化示意，仅展示结构）：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">------WebKitFormBoundary7MA4YWxkTrZu0gW</span><br><span class="line">Content-Disposition: form-data; name=&quot;request&quot;</span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line">  &quot;title&quot;: &quot;项目需求&quot;,</span><br><span class="line">  &quot;content&quot;: &quot;需要开发新功能&quot;,</span><br><span class="line">  &quot;customerName&quot;: &quot;张三&quot;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">------WebKitFormBoundary7MA4YWxkTrZu0gW</span><br><span class="line">Content-Disposition: form-data; name=&quot;photos&quot;; filename=&quot;photo1.jpg&quot;</span><br><span class="line">Content-Type: image/jpeg</span><br><span class="line"></span><br><span class="line">(这里是第一张图片的二进制数据)</span><br><span class="line"></span><br><span class="line">------WebKitFormBoundary7MA4YWxkTrZu0gW</span><br><span class="line">Content-Disposition: form-data; name=&quot;photos&quot;; filename=&quot;photo2.png&quot;</span><br><span class="line">Content-Type: image/png</span><br><span class="line"></span><br><span class="line">(这里是第二张图片的二进制数据)</span><br><span class="line"></span><br><span class="line">------WebKitFormBoundary7MA4YWxkTrZu0gW--</span><br></pre></td></tr></table></figure>
+
+<p><strong>特点：</strong></p>
+<ul>
+<li>Body 被 <strong>boundary</strong> 分成多段，每一段是一个字段或一个文件。  </li>
+<li>文本部分是可读 JSON &#x2F; 普通字符串，文件部分是二进制。  </li>
+<li><code>photos</code> 字段在服务端可以绑定到 <code>List&lt;IFormFile&gt;</code>。</li>
+</ul>
+<h3><span id="2-frombody-application-json-chun-wen-ben-qing-qiu">2. <code>[FromBody]</code>：<code>application/json</code> 纯文本请求</span><a href="#2-frombody-application-json-chun-wen-ben-qing-qiu" class="header-anchor">#</a></h3><p>典型 HTTP 请求头：</p>
+<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">POST</span> <span class="string">/api/GetCustomerDemandList</span> <span class="meta">HTTP/1.1</span></span><br><span class="line"><span class="attribute">Content-Type</span><span class="punctuation">: </span>application/json</span><br></pre></td></tr></table></figure>
+
+<p>请求体：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;pageNumber&quot;</span><span class="punctuation">:</span> <span class="number">1</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;pageSize&quot;</span><span class="punctuation">:</span> <span class="number">20</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;status&quot;</span><span class="punctuation">:</span> <span class="number">0</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;startTime&quot;</span><span class="punctuation">:</span> <span class="string">&quot;2024-01-01&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;endTime&quot;</span><span class="punctuation">:</span> <span class="string">&quot;2024-12-31&quot;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>特点：</strong></p>
+<ul>
+<li>整个 Body 是一段 JSON 字符串，没有 boundary 分隔。  </li>
+<li>在浏览器 DevTools &#x2F; Fiddler &#x2F; Postman 里 <strong>一眼就能看懂</strong>。  </li>
+<li>不适合直接夹带文件（二进制），需要的话通常会转成 Base64 放进 JSON，但那已经不是“文件上传”这个语义了。</li>
+</ul>
+<hr>
+<h2><span id="zai-diao-shi-gong-ju-li-ta-men-fen-bie-zen-me-chang-xiang">在调试工具里，它们分别怎么“长相”？</span><a href="#zai-diao-shi-gong-ju-li-ta-men-fen-bie-zen-me-chang-xiang" class="header-anchor">#</a></h2><p>在 Postman 或类似 API 工具中：</p>
+<ul>
+<li><p><code>[FromForm]</code>：</p>
+<ul>
+<li>使用 <strong><code>form-data</code></strong> 选项。  </li>
+<li>每一行是一个键值：  <ul>
+<li>文本字段：<code>Type</code>、<code>Barcode</code> 等 → 类型是 <code>Text</code>&#x2F;<code>String</code>。  </li>
+<li>文件字段：<code>photos</code> → 类型必须选 <strong><code>File</code></strong>，并从本地选择文件。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><code>[FromBody]</code>：</p>
+<ul>
+<li>使用 <strong><code>raw</code> + <code>JSON</code></strong> 选项。  </li>
+<li>直接在文本框里写 JSON 对象。</li>
+</ul>
+</li>
+</ul>
+<p>在 Chrome DevTools &#x2F; Fiddler 中：</p>
+<ul>
+<li><p><code>[FromForm]</code> 请求的 Request Body：  </p>
+<ul>
+<li>会看到一堆 <code>------WebKitFormBoundary...</code> 分隔符和 <code>Content-Disposition</code> 头。  </li>
+<li>文本部分清晰可读，文件部分通常显示为“乱码”或十六进制。</li>
+</ul>
+</li>
+<li><p><code>[FromBody]</code> 请求的 Request Body：  </p>
+<ul>
+<li>是格式良好的 JSON，可以直接展开 &#x2F; 折叠字段。</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h2><span id="dian-xing-cai-keng-wei-shi-me-hou-duan-shou-bu-dao-tu-pian">典型踩坑：为什么后端收不到图片？</span><a href="#dian-xing-cai-keng-wei-shi-me-hou-duan-shou-bu-dao-tu-pian" class="header-anchor">#</a></h2><p>在你提供的场景里，接口签名大致是这样：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">[<span class="meta">HttpPost(<span class="string">&quot;AddCustomerDemand&quot;</span>)</span>]</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">async</span> Task&lt;ExecuteResult&lt;<span class="built_in">long</span>&gt;&gt; AddCustomerDemand(</span><br><span class="line">    [<span class="meta">FromForm</span>] AddCustomerDemandRequest request,</span><br><span class="line">    [<span class="meta">FromForm</span>] List&lt;IFormFile&gt;? photos)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">await</span> _customerDemandService.AddCustomerDemandAsync(request, photos);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>代码本身没有问题，但 <strong>后端收不到 <code>photos</code></strong>，常见原因有几类。</p>
+<h3><span id="1-postman-can-shu-lei-xing-she-zhi-cuo-wu-zui-chang-jian">1. Postman 参数类型设置错误（最常见）</span><a href="#1-postman-can-shu-lei-xing-she-zhi-cuo-wu-zui-chang-jian" class="header-anchor">#</a></h3><p>在 Postman 里，如果你这样设置：</p>
+<ul>
+<li>参数名：<code>photos</code>  </li>
+<li>参数类型：<code>Text</code> &#x2F; <code>String</code>  </li>
+<li>参数值：<code>屏幕截图2024-...</code>（只是一个文件名字符串）</li>
+</ul>
+<p>那么：</p>
+<ul>
+<li>HTTP 实际上传的是一段文本，而不是二进制文件。  </li>
+<li>ASP.NET Core 的模型绑定不会把它识别成 <code>IFormFile</code>，于是 <code>photos</code> 就是 <code>null</code> 或空列表。</li>
+</ul>
+<blockquote>
+<p>注意：在 Postman 里，只有参数类型选成 <strong>File</strong> 并选择本地文件时，才是真正上传文件本身。</p>
+</blockquote>
+<p><strong>正确做法</strong>：</p>
+<ul>
+<li>在 <code>form-data</code> 下：  <ul>
+<li>文本字段（如 <code>Type</code>、<code>Barcode</code>、<code>DeviceName</code> 等）类型选 <code>Text</code>。  </li>
+<li>文件字段 <code>photos</code> 类型必须选 <strong><code>File</code></strong>，然后点击右侧按钮从本地选择图片。</li>
+</ul>
+</li>
+</ul>
+<p>可以想象成：<br>→ <strong><code>Text</code> 是“发一段字符串”，<code>File</code> 才是“发一个真正的文件”。</strong></p>
+<h3><span id="2-qing-qiu-mo-xing-li-bu-gai-zai-ding-yi-wen-jian-shu-xing">2. 请求模型里不该再定义文件属性</span><a href="#2-qing-qiu-mo-xing-li-bu-gai-zai-ding-yi-wen-jian-shu-xing" class="header-anchor">#</a></h3><p>请求对象通常写成：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">AddCustomerDemandRequest</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="built_in">string</span> Type &#123; <span class="keyword">get</span>; <span class="keyword">set</span>; &#125;</span><br><span class="line">    <span class="keyword">public</span> <span class="built_in">string</span> Barcode &#123; <span class="keyword">get</span>; <span class="keyword">set</span>; &#125;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">    <span class="comment">// 千万不要在这里再加 IFormFile Photos</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>如果你在 <code>AddCustomerDemandRequest</code> 里也写了一个 <code>IFormFile Photos</code> 属性，同时控制器方法参数又有一个单独的 <code>List&lt;IFormFile&gt; photos</code>，就容易导致：</p>
+<ul>
+<li>模型绑定不知道该把哪一段 form-data 绑定到哪里；  </li>
+<li>最终表现就是某些字段是 null，或者绑定不完整。</li>
+</ul>
+<p><strong>建议</strong>：<br>→ <strong>字段归字段，文件归文件</strong>，请求 DTO 里只放纯数据字段，文件统一用单独的 <code>IFormFile</code> &#x2F; <code>List&lt;IFormFile&gt;</code> 参数接收。</p>
+<h3><span id="3-wen-jian-da-xiao-xian-zhi-x2f-pei-zhi-wen-ti">3. 文件大小限制 &#x2F; 配置问题</span><a href="#3-wen-jian-da-xiao-xian-zhi-x2f-pei-zhi-wen-ti" class="header-anchor">#</a></h3><p>如果你上传的图片比较大，还需要注意 ASP.NET Core 的默认上传大小限制。</p>
+<p>可以在 <code>Program.cs</code>（或 <code>Startup.cs</code>）里配置表单上传大小：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">using</span> Microsoft.AspNetCore.Http.Features;</span><br><span class="line"></span><br><span class="line">builder.Services.Configure&lt;FormOptions&gt;(options =&gt;</span><br><span class="line">&#123;</span><br><span class="line">    options.MultipartBodyLengthLimit = <span class="number">104</span>_857_600; <span class="comment">// 100 MB</span></span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<p>如果不配置：</p>
+<ul>
+<li>上传超大文件时，可能会被服务器直接拒绝；  </li>
+<li>控制器方法甚至不会被调用，更别说拿到 <code>photos</code> 了。</li>
+</ul>
+<h3><span id="4-que-shao-ri-zhi-wu-fa-que-ren-dao-di-shou-dao-liao-shi-me">4. 缺少日志，无法确认“到底收到了什么”</span><a href="#4-que-shao-ri-zhi-wu-fa-que-ren-dao-di-shou-dao-liao-shi-me" class="header-anchor">#</a></h3><p>在排查这类问题时，建议先加入一些日志：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">[<span class="meta">HttpPost(<span class="string">&quot;AddCustomerDemand&quot;</span>)</span>]</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">async</span> Task&lt;ExecuteResult&lt;<span class="built_in">long</span>&gt;&gt; AddCustomerDemand(</span><br><span class="line">    [<span class="meta">FromForm</span>] AddCustomerDemandRequest request,</span><br><span class="line">    [<span class="meta">FromForm</span>] List&lt;IFormFile&gt;? photos)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (photos == <span class="literal">null</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        _logger.LogWarning(<span class="string">&quot;photos 参数为 null&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">    &#123;</span><br><span class="line">        _logger.LogInformation(<span class="string">$&quot;接收到 <span class="subst">&#123;photos.Count&#125;</span> 个文件：&quot;</span>);</span><br><span class="line">        <span class="keyword">foreach</span> (<span class="keyword">var</span> <span class="keyword">file</span> <span class="keyword">in</span> photos)</span><br><span class="line">        &#123;</span><br><span class="line">            _logger.LogInformation(<span class="string">$&quot;文件名: <span class="subst">&#123;<span class="keyword">file</span>.FileName&#125;</span>, 大小: <span class="subst">&#123;<span class="keyword">file</span>.Length&#125;</span> bytes&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">await</span> _customerDemandService.AddCustomerDemandAsync(request, photos);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>有了这些日志，你可以快速判断：</p>
+<ul>
+<li>是 Postman 没传上来，还是中间被某个中间件 &#x2F; 限制拦下了；  </li>
+<li>还是已经到控制器，但文件列表为空。</li>
+</ul>
+<h2><span id="shi-zhan-xiao-jie-ru-he-xuan-yong-fromform-x2f-frombody">实战小结：如何选用 FromForm &#x2F; FromBody？</span><a href="#shi-zhan-xiao-jie-ru-he-xuan-yong-fromform-x2f-frombody" class="header-anchor">#</a></h2><p>可以按照下面这个小清单来做决策：</p>
+<ul>
+<li><p><strong>只接收结构化数据（JSON&#x2F;XML）</strong>：  </p>
+<ul>
+<li>接口参数：<code>[FromBody] SomeRequestDto request</code>  </li>
+<li>Content-Type：<code>application/json</code></li>
+</ul>
+</li>
+<li><p><strong>要接收文件（图片 &#x2F; 附件）</strong>：  </p>
+<ul>
+<li>接口参数：<code>[FromForm] SomeRequestDto request, [FromForm] List&lt;IFormFile&gt; files</code>  </li>
+<li>Content-Type：<code>multipart/form-data</code>  </li>
+<li>Postman 中：文件字段类型必须选 <code>File</code>。</li>
+</ul>
+</li>
+<li><p><strong>兼容传统 HTML 表单提交</strong>：  </p>
+<ul>
+<li><code>application/x-www-form-urlencoded</code> 或 <code>multipart/form-data</code> → 优先用 <code>[FromForm]</code>。</li>
+</ul>
+</li>
+<li><p><strong>日志 + 抓包联合排查</strong>：  </p>
+<ul>
+<li>先用日志确认控制器层到底收到什么；  </li>
+<li>再用 DevTools &#x2F; Fiddler &#x2F; Postman 看实际请求内容（Content-Type、Body 结构）是否符合预期。</li>
+</ul>
+</li>
+</ul>
+<p>如果你把这些原则和检查点都走一遍，再遇到 FromForm &#x2F; FromBody 相关的问题，基本都能很快定位到“是写法问题，还是请求格式问题”，而不再停留在“感觉差不多”的模糊状态。希望这篇整理能帮你之后在设计 ASP.NET Core API 时，少踩一些关于参数绑定和文件上传的坑。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2026/02/11/ASP.NET-Core-FromForm-%E4%B8%8E-FromBody-%E5%8C%BA%E5%88%AB%E5%92%8C%E5%B8%B8%E8%A7%81%E5%9D%91/" data-id="cuidju9H3QZLpiq_CyZWIShxd" data-title="ASP.NET Core 中 FromForm 与 FromBody 的区别和常见坑" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/ASP-NET-Core/" rel="tag">ASP.NET Core</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/FromBody/" rel="tag">FromBody</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/FromForm/" rel="tag">FromForm</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Web-API/" rel="tag">Web API</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0/" rel="tag">文件上传</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2026/02/11/KISS-%E4%B8%8E-DRY-%E5%9C%A8%E4%BB%A3%E7%A0%81%E4%B8%AD%E7%9A%84%E5%8F%96%E8%88%8D/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">后一篇</strong>
+      <div class="article-nav-title">KISS 原则有时比 DRY 更重要</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%95%99%E7%A8%8B/">教程</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%BC%96%E7%A8%8B%E5%AE%9E%E8%B7%B5/">编程实践</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/">网络基础</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/ASP-NET-Core/" rel="tag">ASP.NET Core</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/DRY/" rel="tag">DRY</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/FromBody/" rel="tag">FromBody</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/FromForm/" rel="tag">FromForm</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/GitHub-Pages/" rel="tag">GitHub Pages</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/HTTP/" rel="tag">HTTP</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Hexo/" rel="tag">Hexo</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/KISS/" rel="tag">KISS</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MIME/" rel="tag">MIME</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/URI/" rel="tag">URI</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/URL/" rel="tag">URL</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Web-API/" rel="tag">Web API</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Web%E5%BC%80%E5%8F%91/" rel="tag">Web开发</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BB%A3%E7%A0%81%E8%AE%BE%E8%AE%A1/" rel="tag">代码设计</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%86%85%E5%AE%B9%E7%B1%BB%E5%9E%8B/" rel="tag">内容类型</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA/" rel="tag">博客搭建</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%95%99%E7%A8%8B/" rel="tag">教程</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0/" rel="tag">文件上传</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BC%96%E7%A0%81%E5%8E%9F%E5%88%99/" rel="tag">编码原则</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/" rel="tag">网络基础</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/ASP-NET-Core/" style="font-size: 10px;">ASP.NET Core</a> <a href="/tags/DRY/" style="font-size: 10px;">DRY</a> <a href="/tags/FromBody/" style="font-size: 10px;">FromBody</a> <a href="/tags/FromForm/" style="font-size: 10px;">FromForm</a> <a href="/tags/GitHub-Pages/" style="font-size: 10px;">GitHub Pages</a> <a href="/tags/HTTP/" style="font-size: 20px;">HTTP</a> <a href="/tags/Hexo/" style="font-size: 10px;">Hexo</a> <a href="/tags/KISS/" style="font-size: 10px;">KISS</a> <a href="/tags/MIME/" style="font-size: 10px;">MIME</a> <a href="/tags/URI/" style="font-size: 10px;">URI</a> <a href="/tags/URL/" style="font-size: 10px;">URL</a> <a href="/tags/Web-API/" style="font-size: 10px;">Web API</a> <a href="/tags/Web%E5%BC%80%E5%8F%91/" style="font-size: 10px;">Web开发</a> <a href="/tags/%E4%BB%A3%E7%A0%81%E8%AE%BE%E8%AE%A1/" style="font-size: 10px;">代码设计</a> <a href="/tags/%E5%86%85%E5%AE%B9%E7%B1%BB%E5%9E%8B/" style="font-size: 10px;">内容类型</a> <a href="/tags/%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA/" style="font-size: 10px;">博客搭建</a> <a href="/tags/%E6%95%99%E7%A8%8B/" style="font-size: 10px;">教程</a> <a href="/tags/%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0/" style="font-size: 10px;">文件上传</a> <a href="/tags/%E7%BC%96%E7%A0%81%E5%8E%9F%E5%88%99/" style="font-size: 10px;">编码原则</a> <a href="/tags/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/" style="font-size: 10px;">网络基础</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2026/02/">二月 2026</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2026/02/11/ASP.NET-Core-FromForm-%E4%B8%8E-FromBody-%E5%8C%BA%E5%88%AB%E5%92%8C%E5%B8%B8%E8%A7%81%E5%9D%91/">ASP.NET Core 中 FromForm 与 FromBody 的区别和常见坑</a>
+          </li>
+        
+          <li>
+            <a href="/2026/02/11/KISS-%E4%B8%8E-DRY-%E5%9C%A8%E4%BB%A3%E7%A0%81%E4%B8%AD%E7%9A%84%E5%8F%96%E8%88%8D/">KISS 原则有时比 DRY 更重要</a>
+          </li>
+        
+          <li>
+            <a href="/2026/02/11/GitHub-Pages-%E9%9D%99%E6%80%81%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/">GitHub Pages + 静态博客搭建指南</a>
+          </li>
+        
+          <li>
+            <a href="/2026/02/11/MIME-%E7%B1%BB%E5%9E%8B%E5%88%B0%E5%BA%95%E6%98%AF%E4%BB%80%E4%B9%88-%E4%B8%80%E6%96%87%E8%AE%B2%E6%B8%85%E5%AE%83%E7%9A%84%E4%BD%9C%E7%94%A8/">MIME 类型到底是什么？一文讲清它的作用</a>
+          </li>
+        
+          <li>
+            <a href="/2026/02/11/URI%E5%92%8CURL%E7%9A%84%E5%8C%BA%E5%88%AB%E5%88%B0%E5%BA%95%E6%98%AF%E4%BB%80%E4%B9%88/">URI 和 URL 的区别到底是什么？</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2026 kunjianliu<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.6.4.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>

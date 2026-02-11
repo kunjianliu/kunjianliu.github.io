@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>MIME 类型到底是什么？一文讲清它的作用 | simple focus</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="这篇文章用通俗的方式解释 MIME 类型是什么、长什么样、在浏览器 &#x2F; 邮件 &#x2F; API 通信中分别起什么作用，以及它和安全之间的关系。看完之后，你应该能看懂常见的 Content-Type 头，也知道什么时候需要手动配置它。      结论先行 背景与问题 什么是 MIME 类型？ MIME 类型长什么样？ MIME 类型的核心作用 1. 指导浏览器如何渲染内容 2. 帮操作">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MIME 类型到底是什么？一文讲清它的作用">
+<meta property="og:url" content="http://example.com/2026/02/11/MIME-%E7%B1%BB%E5%9E%8B%E5%88%B0%E5%BA%95%E6%98%AF%E4%BB%80%E4%B9%88-%E4%B8%80%E6%96%87%E8%AE%B2%E6%B8%85%E5%AE%83%E7%9A%84%E4%BD%9C%E7%94%A8/index.html">
+<meta property="og:site_name" content="simple focus">
+<meta property="og:description" content="这篇文章用通俗的方式解释 MIME 类型是什么、长什么样、在浏览器 &#x2F; 邮件 &#x2F; API 通信中分别起什么作用，以及它和安全之间的关系。看完之后，你应该能看懂常见的 Content-Type 头，也知道什么时候需要手动配置它。      结论先行 背景与问题 什么是 MIME 类型？ MIME 类型长什么样？ MIME 类型的核心作用 1. 指导浏览器如何渲染内容 2. 帮操作">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-02-10T16:00:00.000Z">
+<meta property="article:modified_time" content="2026-02-11T14:30:42.488Z">
+<meta property="article:author" content="kunjianliu">
+<meta property="article:tag" content="HTTP">
+<meta property="article:tag" content="MIME">
+<meta property="article:tag" content="Web开发">
+<meta property="article:tag" content="内容类型">
+<meta name="twitter:card" content="summary">
+  
+    <link rel="alternate" href="/atom.xml" title="simple focus" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+  
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fork-awesome@1.2.0/css/fork-awesome.min.css">
+
+<meta name="generator" content="Hexo 8.1.1"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">simple focus</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"><span class="fa fa-bars"></span></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+        
+          <a class="nav-icon" href="/atom.xml" title="RSS 订阅"><span class="fa fa-rss"></span></a>
+        
+        <a class="nav-icon nav-search-btn" title="搜索"><span class="fa fa-search"></span></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="搜索"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://example.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-MIME-类型到底是什么-一文讲清它的作用" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2026/02/11/MIME-%E7%B1%BB%E5%9E%8B%E5%88%B0%E5%BA%95%E6%98%AF%E4%BB%80%E4%B9%88-%E4%B8%80%E6%96%87%E8%AE%B2%E6%B8%85%E5%AE%83%E7%9A%84%E4%BD%9C%E7%94%A8/" class="article-date">
+  <time class="dt-published" datetime="2026-02-10T16:00:00.000Z" itemprop="datePublished">2026-02-11</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/">网络基础</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      MIME 类型到底是什么？一文讲清它的作用
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>这篇文章用通俗的方式解释 <strong>MIME 类型是什么、长什么样、在浏览器 &#x2F; 邮件 &#x2F; API 通信中分别起什么作用</strong>，以及它和安全之间的关系。看完之后，你应该能看懂常见的 <code>Content-Type</code> 头，也知道什么时候需要手动配置它。</p>
+<div class="toc">
+
+<!-- toc -->
+
+<ul>
+<li><a href="#jie-lun-xian-xing">结论先行</a></li>
+<li><a href="#bei-jing-yu-wen-ti">背景与问题</a></li>
+<li><a href="#shi-me-shi-mime-lei-xing">什么是 MIME 类型？</a></li>
+<li><a href="#mime-lei-xing-chang-shi-me-yang">MIME 类型长什么样？</a></li>
+<li><a href="#mime-lei-xing-de-he-xin-zuo-yong">MIME 类型的核心作用</a><ul>
+<li><a href="#1-zhi-dao-liu-lan-qi-ru-he-xuan-ran-nei-rong">1. 指导浏览器如何渲染内容</a></li>
+<li><a href="#2-bang-cao-zuo-xi-tong-zhao-dao-he-gua-de-ben-di-ying-yong">2. 帮操作系统找到合适的本地应用</a></li>
+<li><a href="#3-rang-dian-zi-you-jian-zhi-chi-ge-chong-fu-jian">3. 让电子邮件支持各种附件</a></li>
+<li><a href="#4-zai-api-tong-xin-zhong-xie-shang-shu-ju-ge-shi">4. 在 API 通信中协商数据格式</a></li>
+<li><a href="#5-zuo-wei-ji-chu-de-an-quan-fang-hu-shou-duan">5. 作为基础的安全防护手段</a></li>
+</ul>
+</li>
+<li><a href="#yi-ge-wan-zheng-de-http-shi-li">一个完整的 HTTP 示例</a></li>
+<li><a href="#xiao-jie">小结</a></li>
+</ul>
+<!-- tocstop -->
+
+</div>
+
+<h2><span id="jie-lun-xian-xing">结论先行</span><a href="#jie-lun-xian-xing" class="header-anchor">#</a></h2><ul>
+<li><strong>一句话结论</strong>：MIME 类型是一种“内容类型标签”，用来告诉接收方“这段数据到底是什么格式”，从而让浏览器、操作系统、邮件客户端、API 客户端 <strong>知道该怎么解析和展示它</strong>。</li>
+<li><strong>适用前提</strong>：<ul>
+<li>你在做 Web 开发（前端 &#x2F; 后端 &#x2F; 全栈），经常和 HTTP、API、文件上传下载打交道</li>
+<li>你想搞清楚为什么有时候浏览器会把文件直接打开，有时候却只下载，或者出现“格式不正确”的报错</li>
+<li>你希望正确设置 <code>Content-Type</code>，避免编码问题和安全隐患</li>
+</ul>
+</li>
+</ul>
+<h2><span id="bei-jing-yu-wen-ti">背景与问题</span><a href="#bei-jing-yu-wen-ti" class="header-anchor">#</a></h2><p>在真实开发中，经常会遇到类似情况：</p>
+<ul>
+<li>浏览器请求了一个接口，返回的是 JSON 数据，但因为 <code>Content-Type</code> 没设好，导致浏览器当成纯文本甚至下载文件</li>
+<li>上传文件接口明明限制了“只能上传图片”，但有人还是传上来脚本文件，造成安全风险</li>
+<li>邮件里带的附件收不到、打不开，或者被客户端当成“乱码”</li>
+<li>不同 API 客户端想要不同格式的数据（JSON &#x2F; XML &#x2F; HTML），但双方沟通混乱</li>
+</ul>
+<p>这些问题背后，有一个共同的关键点：<strong>数据是什么，接收方要靠“标签”来判断，而不是“猜”</strong>。<br>这个“标签”，就是 MIME 类型。</p>
+<h2><span id="shi-me-shi-mime-lei-xing">什么是 MIME 类型？</span><a href="#shi-me-shi-mime-lei-xing" class="header-anchor">#</a></h2><p><strong>MIME 类型</strong>，最初叫 <em>Multipurpose Internet Mail Extensions</em>（多用途互联网邮件扩展），后来在 HTTP 等协议里被广泛使用，现在更常被称为 <strong>媒体类型（Media Type）</strong> 或 <strong>内容类型（Content Type）</strong>。</p>
+<p>你可以把它类比成：</p>
+<ul>
+<li><strong>快递单上的“物品说明”</strong></li>
+<li>或者 <strong>文件的“身份证”</strong></li>
+</ul>
+<p>它本身不包含真正的内容，但会告诉接收方：</p>
+<ul>
+<li>“这是一段 HTML 文本”</li>
+<li>“这是一张 JPEG 图片”</li>
+<li>“这是一份 PDF 文档”</li>
+<li>“这是一段 JSON 数据”</li>
+</ul>
+<p>有了这个信息，浏览器 &#x2F; 邮件客户端 &#x2F; 操作系统 才能决定：</p>
+<ul>
+<li>用什么方式解析</li>
+<li>展示给用户还是直接下载</li>
+<li>是否调用某个插件或应用程序打开</li>
+</ul>
+<h2><span id="mime-lei-xing-chang-shi-me-yang">MIME 类型长什么样？</span><a href="#mime-lei-xing-chang-shi-me-yang" class="header-anchor">#</a></h2><p>MIME 类型的基本格式是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">类型/子类型</span><br></pre></td></tr></table></figure>
+
+<p>常见例子：</p>
+<ul>
+<li><code>text/html</code> → 文本类型中的 HTML 文档</li>
+<li><code>image/jpeg</code> → 图片类型中的 JPEG 格式</li>
+<li><code>application/pdf</code> → 应用程序数据中的 PDF 文档</li>
+<li><code>video/mp4</code> → 视频类型中的 MP4 格式</li>
+<li><code>application/json</code> → 应用程序数据中的 JSON 格式</li>
+</ul>
+<p>有时还会带参数，例如字符集信息：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">text/html; charset=UTF-8</span><br></pre></td></tr></table></figure>
+
+<p>这里的 <code>charset=UTF-8</code> 表示正文内容使用 UTF-8 编码，对中文页面非常关键。</p>
+<h2><span id="mime-lei-xing-de-he-xin-zuo-yong">MIME 类型的核心作用</span><a href="#mime-lei-xing-de-he-xin-zuo-yong" class="header-anchor">#</a></h2><h3><span id="1-zhi-dao-liu-lan-qi-ru-he-xuan-ran-nei-rong">1. 指导浏览器如何渲染内容</span><a href="#1-zhi-dao-liu-lan-qi-ru-he-xuan-ran-nei-rong" class="header-anchor">#</a></h3><p>在 HTTP 响应中，服务器会通过 <code>Content-Type</code> 头告诉浏览器“我给你的这坨数据是什么”。</p>
+<p>示例：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">HTTP/1.1 200 OK</span><br><span class="line">Content-Type: text/html; charset=UTF-8</span><br><span class="line">Content-Length: 1234</span><br><span class="line"></span><br><span class="line">&lt;!DOCTYPE html&gt;</span><br><span class="line">&lt;html&gt;</span><br><span class="line">...</span><br><span class="line">&lt;/html&gt;</span><br></pre></td></tr></table></figure>
+
+<p>浏览器看到 <code>Content-Type: text/html</code>，就知道：</p>
+<ul>
+<li>这是一段 HTML 文本</li>
+<li>需要按 HTML 规范解析，并渲染成网页</li>
+</ul>
+<p>如果是图片：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Content-Type: image/png</span><br></pre></td></tr></table></figure>
+
+<p>浏览器就会把它当成 PNG 图片展示，而不是当作一堆“乱码文字”。</p>
+<p>再比如：</p>
+<ul>
+<li><code>application/pdf</code> → 调用内置或外部 PDF 阅读器预览或下载</li>
+<li><code>application/json</code> → DevTools 中会按 JSON 高亮显示，前端代码也更容易按 JSON 解析</li>
+</ul>
+<p><strong>如果 MIME 类型设置错误</strong>，常见现象包括：</p>
+<ul>
+<li>HTML 被当成纯文本显示，页面源码直接露出来</li>
+<li>JSON 被下载成文件，而不是在浏览器中展示</li>
+<li>JS 或 CSS 被当作别的类型，导致前端功能失效</li>
+</ul>
+<h3><span id="2-bang-cao-zuo-xi-tong-zhao-dao-he-gua-de-ben-di-ying-yong">2. 帮操作系统找到合适的本地应用</span><a href="#2-bang-cao-zuo-xi-tong-zhao-dao-he-gua-de-ben-di-ying-yong" class="header-anchor">#</a></h3><p>在操作系统里，MIME 类型和文件扩展名通常是一一对应或近似对应的：</p>
+<ul>
+<li><code>.jpg</code> → <code>image/jpeg</code> → 用图片查看器打开</li>
+<li><code>.pdf</code> → <code>application/pdf</code> → 用 PDF 阅读器打开</li>
+<li><code>.mp4</code> → <code>video/mp4</code> → 用视频播放器打开</li>
+</ul>
+<p>当你双击一个文件时：</p>
+<ol>
+<li>系统先根据扩展名推断 MIME 类型</li>
+<li>再根据 MIME 类型查找 <strong>默认应用程序</strong></li>
+<li>于是文件就被用对应的软件打开了</li>
+</ol>
+<p>虽然用户平时看到的是“扩展名 + 默认程序”，但系统底层通常是靠 MIME 类型来管理这些映射规则的。</p>
+<h3><span id="3-rang-dian-zi-you-jian-zhi-chi-ge-chong-fu-jian">3. 让电子邮件支持各种附件</span><a href="#3-rang-dian-zi-you-jian-zhi-chi-ge-chong-fu-jian" class="header-anchor">#</a></h3><p>MIME 标准最早是为了解决：“电子邮件除了纯文本，还能不能发点别的？比如图片、音频、PDF？”</p>
+<p>于是：</p>
+<ul>
+<li>把二进制文件用一种安全的方式编码（如 Base64）</li>
+<li>用 MIME 类型说明 <strong>附件的真实类型</strong></li>
+<li>邮件客户端收到后，根据 MIME 类型选择合适的方式解码和展示</li>
+</ul>
+<p>例如邮件里会出现类似描述：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Content-Type: image/jpeg; name=&quot;photo.jpg&quot;</span><br><span class="line">Content-Transfer-Encoding: base64</span><br></pre></td></tr></table></figure>
+
+<p>有了这些信息，收件人的邮件客户端才能知道：</p>
+<ul>
+<li>这是张 JPEG 图片</li>
+<li>需要先 Base64 解码</li>
+<li>再以图片形式嵌入邮件或作为附件展示</li>
+</ul>
+<h3><span id="4-zai-api-tong-xin-zhong-xie-shang-shu-ju-ge-shi">4. 在 API 通信中协商数据格式</span><a href="#4-zai-api-tong-xin-zhong-xie-shang-shu-ju-ge-shi" class="header-anchor">#</a></h3><p>在前后端通过 HTTP API 通信时，MIME 类型也极其关键，主要体现在两个头：</p>
+<ul>
+<li><code>Content-Type</code>：<strong>我发送的数据是什么格式</strong></li>
+<li><code>Accept</code>：<strong>我希望你返回什么格式</strong></li>
+</ul>
+<p>典型例子（客户端发请求）：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">POST /api/users HTTP/1.1</span><br><span class="line">Content-Type: application/json</span><br><span class="line">Accept: application/json</span><br><span class="line"></span><br><span class="line">&#123;&quot;name&quot;: &quot;Alice&quot;, &quot;age&quot;: 18&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这里表示：</p>
+<ul>
+<li>请求体是 JSON（<code>Content-Type: application/json</code>）</li>
+<li>客户端希望响应体也是 JSON（<code>Accept: application/json</code>）</li>
+</ul>
+<p>后端收到后，就会：</p>
+<ul>
+<li>按 JSON 方式解析请求体</li>
+<li>通常也按 JSON 格式响应数据</li>
+</ul>
+<p>如果 <code>Content-Type</code> 声明和实际内容不一致，后端框架往往会直接报错或解析失败。</p>
+<h3><span id="5-zuo-wei-ji-chu-de-an-quan-fang-hu-shou-duan">5. 作为基础的安全防护手段</span><a href="#5-zuo-wei-ji-chu-de-an-quan-fang-hu-shou-duan" class="header-anchor">#</a></h3><p>MIME 类型本身不是安全方案，但可以作为 <strong>第一层过滤和限制</strong>，常见用法包括：</p>
+<ul>
+<li>上传接口只接受 <code>image/*</code> 类型，拒绝可执行类型（如某些 <code>application/x-executable</code>）</li>
+<li>静态资源服务器只根据白名单类型提供服务，比如只服务 <code>text/css</code>、<code>application/javascript</code>、<code>image/*</code> 等</li>
+<li>某些安全头（如 <code>X-Content-Type-Options: nosniff</code>）要求浏览器 <strong>不要乱猜 MIME 类型</strong>，而是严格按 <code>Content-Type</code> 行事，以减少某些脚本注入风险</li>
+</ul>
+<p>举个典型攻击场景：</p>
+<ul>
+<li>用户上传一个伪装成图片的脚本文件</li>
+<li>如果服务器错误地标记为 <code>text/html</code> 或 <code>application/javascript</code></li>
+<li>浏览器访问时可能会当作脚本执行，造成 XSS 等问题</li>
+</ul>
+<p>因此，<strong>正确设置和校验 MIME 类型</strong>，是 Web 安全的基础之一。</p>
+<h2><span id="yi-ge-wan-zheng-de-http-shi-li">一个完整的 HTTP 示例</span><a href="#yi-ge-wan-zheng-de-http-shi-li" class="header-anchor">#</a></h2><p>综合上面的内容，看一个相对完整的示例：浏览器请求一个 JSON API。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"># 浏览器或客户端请求</span><br><span class="line">GET /api/profile HTTP/1.1</span><br><span class="line">Host: api.example.com</span><br><span class="line">Accept: application/json</span><br><span class="line"></span><br><span class="line"># 服务器响应</span><br><span class="line">HTTP/1.1 200 OK</span><br><span class="line">Content-Type: application/json; charset=UTF-8</span><br><span class="line">Content-Length: 89</span><br><span class="line"></span><br><span class="line">&#123;&quot;id&quot;: 1, &quot;name&quot;: &quot;Alice&quot;, &quot;role&quot;: &quot;admin&quot;, &quot;email&quot;: &quot;alice@example.com&quot;&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这里：</p>
+<ul>
+<li><code>Accept: application/json</code>：客户端说“我希望你给我 JSON”</li>
+<li><code>Content-Type: application/json; charset=UTF-8</code>：服务器回应“好的，我给你的是 JSON，编码是 UTF-8”</li>
+<li>客户端就能放心地用 JSON 解析库来处理响应体</li>
+</ul>
+<p>如果这里写成了 <code>text/html</code> 或 <code>text/plain</code>，很多工具的行为就会变得微妙甚至出错。</p>
+<h2><span id="xiao-jie">小结</span><a href="#xiao-jie" class="header-anchor">#</a></h2><ul>
+<li><strong>MIME 类型 &#x3D; 数据的“内容类型标签”</strong>，是 HTTP &#x2F; 邮件等应用层协议里非常基础但极其重要的一环。</li>
+<li>它决定了浏览器、操作系统、邮件客户端和 API 客户端 <strong>应该如何解析、展示和处理这段数据</strong>。</li>
+<li>在 Web 开发中，合理设置 <code>Content-Type</code>、<code>Accept</code>，以及对上传文件的 MIME 类型进行校验，是保证功能正确和提升安全性的关键步骤。</li>
+<li>下次你再看到 <code>Content-Type: application/json</code> 或 <code>text/html; charset=UTF-8</code> 这类字段时，可以把它当成是“我接下来要给你什么”的清晰自我介绍。</li>
+</ul>
+<p>希望这篇整理能帮你在实际开发中更自信地处理 <code>Content-Type</code>、文件上传和 API 数据格式，也少踩一些“明明是 JSON 却被当成别的东西”的坑。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2026/02/11/MIME-%E7%B1%BB%E5%9E%8B%E5%88%B0%E5%BA%95%E6%98%AF%E4%BB%80%E4%B9%88-%E4%B8%80%E6%96%87%E8%AE%B2%E6%B8%85%E5%AE%83%E7%9A%84%E4%BD%9C%E7%94%A8/" data-id="cuidrVMyaeKr2DA8iV9wprJBO" data-title="MIME 类型到底是什么？一文讲清它的作用" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/HTTP/" rel="tag">HTTP</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/MIME/" rel="tag">MIME</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Web%E5%BC%80%E5%8F%91/" rel="tag">Web开发</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%86%85%E5%AE%B9%E7%B1%BB%E5%9E%8B/" rel="tag">内容类型</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2026/02/11/GitHub-Pages-%E9%9D%99%E6%80%81%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">前一篇</strong>
+      <div class="article-nav-title">
+        
+          GitHub Pages + 静态博客搭建指南
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2026/02/11/URI%E5%92%8CURL%E7%9A%84%E5%8C%BA%E5%88%AB%E5%88%B0%E5%BA%95%E6%98%AF%E4%BB%80%E4%B9%88/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">后一篇</strong>
+      <div class="article-nav-title">URI 和 URL 的区别到底是什么？</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%95%99%E7%A8%8B/">教程</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%BC%96%E7%A8%8B%E5%AE%9E%E8%B7%B5/">编程实践</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/">网络基础</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/ASP-NET-Core/" rel="tag">ASP.NET Core</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/DRY/" rel="tag">DRY</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/FromBody/" rel="tag">FromBody</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/FromForm/" rel="tag">FromForm</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/GitHub-Pages/" rel="tag">GitHub Pages</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/HTTP/" rel="tag">HTTP</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Hexo/" rel="tag">Hexo</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/KISS/" rel="tag">KISS</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MIME/" rel="tag">MIME</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/URI/" rel="tag">URI</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/URL/" rel="tag">URL</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Web-API/" rel="tag">Web API</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Web%E5%BC%80%E5%8F%91/" rel="tag">Web开发</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BB%A3%E7%A0%81%E8%AE%BE%E8%AE%A1/" rel="tag">代码设计</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%86%85%E5%AE%B9%E7%B1%BB%E5%9E%8B/" rel="tag">内容类型</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA/" rel="tag">博客搭建</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%95%99%E7%A8%8B/" rel="tag">教程</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0/" rel="tag">文件上传</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BC%96%E7%A0%81%E5%8E%9F%E5%88%99/" rel="tag">编码原则</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/" rel="tag">网络基础</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/ASP-NET-Core/" style="font-size: 10px;">ASP.NET Core</a> <a href="/tags/DRY/" style="font-size: 10px;">DRY</a> <a href="/tags/FromBody/" style="font-size: 10px;">FromBody</a> <a href="/tags/FromForm/" style="font-size: 10px;">FromForm</a> <a href="/tags/GitHub-Pages/" style="font-size: 10px;">GitHub Pages</a> <a href="/tags/HTTP/" style="font-size: 20px;">HTTP</a> <a href="/tags/Hexo/" style="font-size: 10px;">Hexo</a> <a href="/tags/KISS/" style="font-size: 10px;">KISS</a> <a href="/tags/MIME/" style="font-size: 10px;">MIME</a> <a href="/tags/URI/" style="font-size: 10px;">URI</a> <a href="/tags/URL/" style="font-size: 10px;">URL</a> <a href="/tags/Web-API/" style="font-size: 10px;">Web API</a> <a href="/tags/Web%E5%BC%80%E5%8F%91/" style="font-size: 10px;">Web开发</a> <a href="/tags/%E4%BB%A3%E7%A0%81%E8%AE%BE%E8%AE%A1/" style="font-size: 10px;">代码设计</a> <a href="/tags/%E5%86%85%E5%AE%B9%E7%B1%BB%E5%9E%8B/" style="font-size: 10px;">内容类型</a> <a href="/tags/%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA/" style="font-size: 10px;">博客搭建</a> <a href="/tags/%E6%95%99%E7%A8%8B/" style="font-size: 10px;">教程</a> <a href="/tags/%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0/" style="font-size: 10px;">文件上传</a> <a href="/tags/%E7%BC%96%E7%A0%81%E5%8E%9F%E5%88%99/" style="font-size: 10px;">编码原则</a> <a href="/tags/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/" style="font-size: 10px;">网络基础</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2026/02/">二月 2026</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2026/02/11/ASP.NET-Core-FromForm-%E4%B8%8E-FromBody-%E5%8C%BA%E5%88%AB%E5%92%8C%E5%B8%B8%E8%A7%81%E5%9D%91/">ASP.NET Core 中 FromForm 与 FromBody 的区别和常见坑</a>
+          </li>
+        
+          <li>
+            <a href="/2026/02/11/KISS-%E4%B8%8E-DRY-%E5%9C%A8%E4%BB%A3%E7%A0%81%E4%B8%AD%E7%9A%84%E5%8F%96%E8%88%8D/">KISS 原则有时比 DRY 更重要</a>
+          </li>
+        
+          <li>
+            <a href="/2026/02/11/GitHub-Pages-%E9%9D%99%E6%80%81%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/">GitHub Pages + 静态博客搭建指南</a>
+          </li>
+        
+          <li>
+            <a href="/2026/02/11/MIME-%E7%B1%BB%E5%9E%8B%E5%88%B0%E5%BA%95%E6%98%AF%E4%BB%80%E4%B9%88-%E4%B8%80%E6%96%87%E8%AE%B2%E6%B8%85%E5%AE%83%E7%9A%84%E4%BD%9C%E7%94%A8/">MIME 类型到底是什么？一文讲清它的作用</a>
+          </li>
+        
+          <li>
+            <a href="/2026/02/11/URI%E5%92%8CURL%E7%9A%84%E5%8C%BA%E5%88%AB%E5%88%B0%E5%BA%95%E6%98%AF%E4%BB%80%E4%B9%88/">URI 和 URL 的区别到底是什么？</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2026 kunjianliu<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.6.4.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>

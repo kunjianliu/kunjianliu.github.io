@@ -71,14 +71,14 @@
       <div class="outer">
         <section id="main">
   
-    <article id="post-GitHub-Pages-静态博客搭建指南" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+    <article id="post-ASP.NET-Core-FromForm-与-FromBody-区别和常见坑" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
   <div class="article-meta">
-    <a href="/2026/02/11/GitHub-Pages-%E9%9D%99%E6%80%81%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/" class="article-date">
+    <a href="/2026/02/11/ASP.NET-Core-FromForm-%E4%B8%8E-FromBody-%E5%8C%BA%E5%88%AB%E5%92%8C%E5%B8%B8%E8%A7%81%E5%9D%91/" class="article-date">
   <time class="dt-published" datetime="2026-02-10T16:00:00.000Z" itemprop="datePublished">2026-02-11</time>
 </a>
     
   <div class="article-category">
-    <a class="article-category-link" href="/categories/%E6%95%99%E7%A8%8B/">教程</a>
+    <a class="article-category-link" href="/categories/%E7%BC%96%E7%A8%8B%E5%AE%9E%E8%B7%B5/">编程实践</a>
   </div>
 
   </div>
@@ -89,7 +89,7 @@
         
   
     <h1 itemprop="name">
-      <a class="p-name article-title" href="/2026/02/11/GitHub-Pages-%E9%9D%99%E6%80%81%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/">GitHub Pages + 静态博客搭建指南</a>
+      <a class="p-name article-title" href="/2026/02/11/ASP.NET-Core-FromForm-%E4%B8%8E-FromBody-%E5%8C%BA%E5%88%AB%E5%92%8C%E5%B8%B8%E8%A7%81%E5%9D%91/">ASP.NET Core 中 FromForm 与 FromBody 的区别和常见坑</a>
     </h1>
   
 
@@ -97,113 +97,230 @@
     
     <div class="e-content article-entry" itemprop="articleBody">
       
-        <p>我来为你提供一份清晰、详细、可操作的 GitHub Pages + 静态博客搭建指南。这个方案完全免费，非常适合记录技术内容。</p>
-<p>我将以 <strong>Hexo + GitHub Pages</strong> 这套最流行、对新手最友好的组合为例，带你一步步完成。整个过程大约需要 30-60分钟。</p>
-<h2 id="核心原理图解"><a href="#核心原理图解" class="headerlink" title="核心原理图解"></a>核心原理图解</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">你的电脑（写作） --&gt; Git推送 --&gt; GitHub仓库（存储+托管） --&gt; 访客通过 `yourname.github.io` 访问</span><br><span class="line">          ↑</span><br><span class="line">      Markdown文件</span><br><span class="line">         (本地)</span><br></pre></td></tr></table></figure>
+        <p>这篇文章基于一个真实的问题：“控制器方法参数里 <code>[FromForm]</code> 和 <code>[FromBody]</code> 有什么区别？为什么接口收不到上传的图片？”。<br>我们从 <strong>概念 → HTTP 层面 → ASP.NET Core 参数绑定 → 排查步骤</strong> 四个角度，把这两个特性讲清楚，并顺带梳理一遍文件上传的常见坑。</p>
+<div class="toc">
 
-<h2 id="第一部分：前期准备（只需做一次）"><a href="#第一部分：前期准备（只需做一次）" class="headerlink" title="第一部分：前期准备（只需做一次）"></a>第一部分：前期准备（只需做一次）</h2><h3 id="第1步：注册GitHub账户"><a href="#第1步：注册GitHub账户" class="headerlink" title="第1步：注册GitHub账户"></a>第1步：注册GitHub账户</h3><ol>
-<li>访问 <a target="_blank" rel="noopener" href="https://github.com/">github.com</a>，点击 “Sign up”。</li>
-<li>按提示填写用户名、邮箱、密码。</li>
-<li>验证邮箱，完成注册。</li>
-</ol>
-<p><strong>关键</strong>：你的用户名将决定你的博客网址（例如，用户名为 <code>alice</code>，则博客地址为 <code>alice.github.io</code>）。</p>
-<h3 id="第2步：安装必备软件"><a href="#第2步：安装必备软件" class="headerlink" title="第2步：安装必备软件"></a>第2步：安装必备软件</h3><p>在你的电脑上安装以下两个工具：</p>
-<p><strong>Git（版本管理工具）</strong></p>
+<!-- toc -->
+
 <ul>
-<li>下载：<a target="_blank" rel="noopener" href="https://git-scm.com/">git-scm.com</a></li>
-<li>安装：一路”Next”即可。安装后，在命令行输入 <code>git --version</code> 能显示版本号即成功。</li>
+<li><a href="#jie-lun-xian-xing">结论先行</a></li>
+<li><a href="#ji-ben-gai-nian-frombody-yu-fromform-fen-bie-zuo-shi-me">基本概念：FromBody 与 FromForm 分别做什么？</a><ul>
+<li><a href="#1-frombody-cong-qing-qiu-ti-zhong-du-qu-jie-gou-hua-shu-ju">1. <code>[FromBody]</code> —— 从请求体中读取结构化数据</a></li>
+<li><a href="#2-fromform-cong-biao-dan-shu-ju-zhong-du-qu-zi-duan-he-wen-jian">2. <code>[FromForm]</code> —— 从表单数据中读取字段和文件</a></li>
 </ul>
-<p><strong>Node.js（运行环境）</strong></p>
+</li>
+<li><a href="#zai-http-ceng-mian-ta-men-dao-di-chang-shi-me-yang">◆ 在 HTTP 层面，它们到底长什么样？</a><ul>
+<li><a href="#1-fromform-multipart-form-data-duo-bu-fen-qing-qiu-biao-dan-wen-jian">1. <code>[FromForm]</code>：<code>multipart/form-data</code> 多部分请求（表单 + 文件）</a></li>
+<li><a href="#2-frombody-application-json-chun-wen-ben-qing-qiu">2. <code>[FromBody]</code>：<code>application/json</code> 纯文本请求</a></li>
+</ul>
+</li>
+<li><a href="#zai-diao-shi-gong-ju-li-ta-men-fen-bie-zen-me-chang-xiang">在调试工具里，它们分别怎么“长相”？</a></li>
+<li><a href="#dian-xing-cai-keng-wei-shi-me-hou-duan-shou-bu-dao-tu-pian">典型踩坑：为什么后端收不到图片？</a><ul>
+<li><a href="#1-postman-can-shu-lei-xing-she-zhi-cuo-wu-zui-chang-jian">1. Postman 参数类型设置错误（最常见）</a></li>
+<li><a href="#2-qing-qiu-mo-xing-li-bu-gai-zai-ding-yi-wen-jian-shu-xing">2. 请求模型里不该再定义文件属性</a></li>
+<li><a href="#3-wen-jian-da-xiao-xian-zhi-pei-zhi-wen-ti">3. 文件大小限制 &#x2F; 配置问题</a></li>
+<li><a href="#4-que-shao-ri-zhi-wu-fa-que-ren-dao-di-shou-dao-liao-shi-me">4. 缺少日志，无法确认“到底收到了什么”</a></li>
+</ul>
+</li>
+<li><a href="#shi-zhan-xiao-jie-ru-he-xuan-yong-fromform-frombody">实战小结：如何选用 FromForm &#x2F; FromBody？</a></li>
+</ul>
+<!-- tocstop -->
+
+</div>
+
+<h2><span id="jie-lun-xian-xing">结论先行</span><a href="#jie-lun-xian-xing" class="header-anchor">#</a></h2><ul>
+<li><p><strong>核心区别一句话版</strong>：  </p>
 <ul>
-<li>下载：<a target="_blank" rel="noopener" href="https://nodejs.org/">nodejs.org</a></li>
-<li>请下载 LTS（长期支持版）。</li>
-<li>安装：同样一路”Next”。安装后，在命令行输入 <code>node -v</code> 和 <code>npm -v</code> 能显示版本号即成功。</li>
-</ul>
-<h3 id="第3步：配置Git身份"><a href="#第3步：配置Git身份" class="headerlink" title="第3步：配置Git身份"></a>第3步：配置Git身份</h3><p>打开命令行（Windows 用 Git Bash 或 CMD，Mac 用 Terminal），设置你的身份信息，这样提交代码时GitHub才知道是谁。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git config --global user.name <span class="string">&quot;你的GitHub用户名&quot;</span></span><br><span class="line">git config --global user.email <span class="string">&quot;你的GitHub注册邮箱&quot;</span></span><br></pre></td></tr></table></figure>
-
-<h2 id="第二部分：创建GitHub-Pages仓库（5分钟）"><a href="#第二部分：创建GitHub-Pages仓库（5分钟）" class="headerlink" title="第二部分：创建GitHub Pages仓库（5分钟）"></a>第二部分：创建GitHub Pages仓库（5分钟）</h2><ol>
-<li>登录 GitHub，点击右上角 <code>+</code> → <code>New repository</code>。</li>
-<li><strong>仓库名</strong> 必须严格按此格式填写：<code>你的用户名.github.io</code><ul>
-<li>例如：用户名为 <code>alice</code>，仓库名就必须是 <code>alice.github.io</code></li>
-<li><strong>这一点至关重要！</strong></li>
+<li><code>[FromBody]</code>：从 <strong>HTTP 请求正文 Body</strong> 里读数据，通常是 <strong>JSON&#x2F;XML</strong> 这类结构化文本，<strong>不适合文件上传</strong>。  </li>
+<li><code>[FromForm]</code>：从 <strong>表单数据</strong>（<code>application/x-www-form-urlencoded</code> &#x2F; <code>multipart/form-data</code>）里读数据，<strong>可以同时绑定普通字段和文件（<code>IFormFile</code>）</strong>。</li>
 </ul>
 </li>
-<li>描述选填，选择 <strong>Public（公开）</strong>，勾选 “Initialize this repository with a README”。</li>
-<li>点击 <code>Create repository</code>。</li>
-</ol>
-<p>至此，你的博客”云端空间”已创建完成。网址将是 <code>https://你的用户名.github.io</code>。</p>
-<h2 id="第三部分：本地搭建Hexo博客（15分钟）"><a href="#第三部分：本地搭建Hexo博客（15分钟）" class="headerlink" title="第三部分：本地搭建Hexo博客（15分钟）"></a>第三部分：本地搭建Hexo博客（15分钟）</h2><h3 id="第1步：安装Hexo命令行工具"><a href="#第1步：安装Hexo命令行工具" class="headerlink" title="第1步：安装Hexo命令行工具"></a>第1步：安装Hexo命令行工具</h3><p>打开命令行，执行以下命令：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install -g hexo-cli</span><br></pre></td></tr></table></figure>
-
-<h3 id="第2步：初始化你的博客文件夹"><a href="#第2步：初始化你的博客文件夹" class="headerlink" title="第2步：初始化你的博客文件夹"></a>第2步：初始化你的博客文件夹</h3><p>选择一个你喜欢的目录（例如 <code>D:\Projects</code>），在命令行中进入该目录，然后执行：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">hexo init my-blog  <span class="comment"># &quot;my-blog&quot;是你的本地博客文件夹名，可以自定义</span></span><br><span class="line"><span class="built_in">cd</span> my-blog          <span class="comment"># 进入这个文件夹</span></span><br><span class="line">npm install         <span class="comment"># 安装依赖包</span></span><br></pre></td></tr></table></figure>
-
-<h3 id="第3步：本地预览博客"><a href="#第3步：本地预览博客" class="headerlink" title="第3步：本地预览博客"></a>第3步：本地预览博客</h3><p>执行以下命令，启动本地服务器：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">hexo server</span><br><span class="line"><span class="comment"># 或者简写: hexo s</span></span><br></pre></td></tr></table></figure>
-
-<p>打开浏览器，访问 <code>http://localhost:4000</code>，你应该能看到一个默认的Hexo博客页面。恭喜，本地博客搭建成功！</p>
-<p>按 <code>Ctrl + C</code> 可以停止本地服务器。</p>
-<h2 id="第四部分：关联本地博客与GitHub仓库并部署（10分钟）"><a href="#第四部分：关联本地博客与GitHub仓库并部署（10分钟）" class="headerlink" title="第四部分：关联本地博客与GitHub仓库并部署（10分钟）"></a>第四部分：关联本地博客与GitHub仓库并部署（10分钟）</h2><h3 id="第1步：安装部署插件"><a href="#第1步：安装部署插件" class="headerlink" title="第1步：安装部署插件"></a>第1步：安装部署插件</h3><p>在你的博客文件夹（<code>my-blog</code>）下，执行：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install hexo-deployer-git --save</span><br></pre></td></tr></table></figure>
-
-<h3 id="第2步：修改博客配置文件"><a href="#第2步：修改博客配置文件" class="headerlink" title="第2步：修改博客配置文件"></a>第2步：修改博客配置文件</h3><p>用任何文本编辑器（如 VS Code、Sublime、记事本）打开博客根目录下的 <code>_config.yml</code> 文件。</p>
-<p>找到 <code>deploy:</code> 部分（通常在文件末尾），修改为：</p>
-<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">deploy:</span></span><br><span class="line">  <span class="attr">type:</span> <span class="string">git</span></span><br><span class="line">  <span class="attr">repo:</span> <span class="string">https://github.com/你的用户名/你的用户名.github.io.git</span></span><br><span class="line">  <span class="attr">branch:</span> <span class="string">main</span></span><br></pre></td></tr></table></figure>
-
-<p>将 <code>你的用户名</code> 替换成你的GitHub用户名。</p>
-<p><strong>注意</strong>：<code>repo:</code> 和 <code>branch:</code> 后面的冒号 <code>:</code> 后必须有一个英文空格，这是YAML格式的要求。</p>
-<p>你可以顺便修改博客的基本信息（在文件顶部）：</p>
-<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">title:</span> <span class="string">你的博客名</span></span><br><span class="line"><span class="attr">subtitle:</span> <span class="string">你的副标题</span></span><br><span class="line"><span class="attr">description:</span> <span class="string">博客描述</span></span><br><span class="line"><span class="attr">author:</span> <span class="string">你的名字</span></span><br><span class="line"><span class="attr">language:</span> <span class="string">zh-CN</span></span><br></pre></td></tr></table></figure>
-
-<h3 id="第3步：生成静态文件并部署到GitHub"><a href="#第3步：生成静态文件并部署到GitHub" class="headerlink" title="第3步：生成静态文件并部署到GitHub"></a>第3步：生成静态文件并部署到GitHub</h3><p>在博客根目录下，依次执行以下三条命令：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">hexo clean     <span class="comment"># 清理缓存和旧文件</span></span><br><span class="line">hexo generate  <span class="comment"># 生成静态网页文件（可简写为 hexo g）</span></span><br><span class="line">hexo deploy    <span class="comment"># 部署到GitHub（可简写为 hexo d）</span></span><br></pre></td></tr></table></figure>
-
-<p>第一次部署时，可能会弹窗要求你登录GitHub账户，按提示操作即可。</p>
-<h3 id="第4步：见证奇迹"><a href="#第4步：见证奇迹" class="headerlink" title="第4步：见证奇迹"></a>第4步：见证奇迹</h3><p>等待1-2分钟，在浏览器中访问 <code>https://你的用户名.github.io</code>，你的个人技术博客已经在线了！</p>
-<h2 id="第五部分：开始写作（核心！）"><a href="#第五部分：开始写作（核心！）" class="headerlink" title="第五部分：开始写作（核心！）"></a>第五部分：开始写作（核心！）</h2><h3 id="如何写一篇新文章？"><a href="#如何写一篇新文章？" class="headerlink" title="如何写一篇新文章？"></a>如何写一篇新文章？</h3><p>在博客根目录下，执行：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hexo new <span class="string">&quot;我的第一篇技术文章&quot;</span></span><br></pre></td></tr></table></figure>
-
-<p>这条命令会在 <code>source/_posts</code> 目录下生成一个Markdown文件：<code>我的第一篇技术文章.md</code>。</p>
-<p>用你喜欢的编辑器（强烈推荐 VS Code）打开这个 <code>.md</code> 文件。</p>
-<p><strong>文章的基本结构：</strong></p>
-<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">---</span><br><span class="line">title: 我的第一篇技术文章</span><br><span class="line">date: 2026-02-11 15:30:00</span><br><span class="line">tags: [JavaScript, 入门]</span><br><span class="line"><span class="section">categories: 编程</span></span><br><span class="line"><span class="section">---</span></span><br><span class="line">这里是文章的摘要，会显示在首页。</span><br><span class="line"></span><br><span class="line">&lt;!-- more --&gt;  &lt;!-- 这是摘要分割线，上面的内容是摘要 --&gt;</span><br><span class="line"></span><br><span class="line"><span class="section">## 这里是正文标题</span></span><br><span class="line"></span><br><span class="line">正文从这里开始，用 <span class="strong">**Markdown语法**</span> 书写，非常方便。</span><br><span class="line"></span><br><span class="line"><span class="section">### 插入代码块（这是最关键的功能！）</span></span><br><span class="line"></span><br><span class="line"><span class="code">```javascript</span></span><br><span class="line"><span class="code">// 你的代码</span></span><br><span class="line"><span class="code">function hello() &#123;</span></span><br><span class="line"><span class="code">    console.log(&#x27;Hello, GitHub Pages!&#x27;);</span></span><br><span class="line"><span class="code">&#125;</span></span><br></pre></td></tr></table></figure>
-
-<h3 id="插入图片"><a href="#插入图片" class="headerlink" title="插入图片"></a>插入图片</h3><p><img src="/%E5%9B%BE%E7%89%87%E9%93%BE%E6%8E%A5%E6%88%96%E8%B7%AF%E5%BE%84" alt="图片描述"></p>
-<p>继续写你的心得…</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">### 写完文章后如何发布？</span><br><span class="line"></span><br><span class="line">和部署时一样，执行&quot;三连&quot;命令：</span><br><span class="line"></span><br><span class="line">```bash</span><br><span class="line">hexo clean</span><br><span class="line">hexo g</span><br><span class="line">hexo d</span><br></pre></td></tr></table></figure>
-
-<p>等待1分钟，刷新你的博客主页，新文章就出现了！</p>
-<h2 id="后续优化与建议"><a href="#后续优化与建议" class="headerlink" title="后续优化与建议"></a>后续优化与建议</h2><ol>
-<li><p><strong>更换主题</strong>：默认主题较简单。在 <a target="_blank" rel="noopener" href="https://hexo.io/themes/">Hexo主题官网</a> 选一个喜欢的，按照主题文档安装（通常只需 <code>git clone</code> 主题到 <code>themes</code> 目录，然后修改 <code>_config.yml</code> 中的 <code>theme</code> 设置）。</p>
-</li>
-<li><p><strong>购买自定义域名（可选）</strong>：在域名商（如 Namesilo、阿里云）购买一个域名（如 <code>yourname.tech</code>），然后在博客 <code>source</code> 目录下新建 <code>CNAME</code> 文件（无后缀），里面写上你的域名，最后在域名管理后台设置DNS解析到 <code>你的用户名.github.io</code>。</p>
-</li>
-<li><p><strong>写作流程固化</strong>：</p>
+<li><p><strong>实践建议</strong>：  </p>
 <ul>
-<li><strong>本地写作</strong>：用 VS Code 在 <code>source/_posts</code> 里写 <code>.md</code> 文件。</li>
-<li><strong>本地预览</strong>：随时用 <code>hexo s</code> 在 <code>localhost:4000</code> 预览效果。</li>
-<li><strong>一键部署</strong>：写完后 <code>hexo clean &amp;&amp; hexo g &amp;&amp; hexo d</code> 三条命令发布。</li>
-<li><strong>备份</strong>：你的整个 <code>my-blog</code> 文件夹就是你的博客源码，建议用Git管理或同步到网盘。</li>
+<li>只传 JSON &#x2F; 查询条件 → 用 <code>[FromBody]</code> 接收一个请求对象即可。  </li>
+<li>既传字段又传文件（图片、附件） → 用 <code>[FromForm]</code>，并用 <code>IFormFile</code> &#x2F; <code>List&lt;IFormFile&gt;</code> 接收文件。  </li>
+<li>REST 风格 API，<strong>纯数据</strong> 优先 <code>[FromBody]</code>，<strong>带文件</strong> 必须 <code>[FromForm]</code>。</li>
 </ul>
 </li>
-</ol>
-<h2 id="遇到问题怎么办？"><a href="#遇到问题怎么办？" class="headerlink" title="遇到问题怎么办？"></a>遇到问题怎么办？</h2><ol>
-<li>检查每一步的命令和配置是否有多余或少打空格。</li>
-<li>仔细阅读命令行中的错误信息，它们通常非常清晰。</li>
-<li>搜索引擎是你的朋友，搜索 “hexo 部署失败 xxxx错误” 基本都能找到答案。</li>
-</ol>
-<h2 id="最后"><a href="#最后" class="headerlink" title="最后"></a>最后</h2><p>这套方案一旦搭好，你的创作体验会非常流畅：用你最熟悉的编辑器写Markdown，用Git命令一键发布，拥有一个干净、专业、完全属于自己且支持完美代码展示的技术博客。</p>
-<p>现在，就从 <code>hexo new &quot;Hello World&quot;</code> 开始你的第一篇记录吧！享受创造的乐趣。</p>
+</ul>
+<hr>
+<h2><span id="ji-ben-gai-nian-frombody-yu-fromform-fen-bie-zuo-shi-me">基本概念：FromBody 与 FromForm 分别做什么？</span><a href="#ji-ben-gai-nian-frombody-yu-fromform-fen-bie-zuo-shi-me" class="header-anchor">#</a></h2><h3><span id="1-frombody-cong-qing-qiu-ti-zhong-du-qu-jie-gou-hua-shu-ju">1. <code>[FromBody]</code> —— 从请求体中读取结构化数据</span><a href="#1-frombody-cong-qing-qiu-ti-zhong-du-qu-jie-gou-hua-shu-ju" class="header-anchor">#</a></h3><ul>
+<li><strong>作用</strong>：从 HTTP 请求的 <strong>Body</strong> 中反序列化请求对象。  </li>
+<li><strong>典型数据格式</strong>：<code>application/json</code>、<code>application/xml</code>。  </li>
+<li><strong>使用场景</strong>：  <ul>
+<li>查询列表：分页 + 筛选条件  </li>
+<li>创建 &#x2F; 更新某个资源的请求对象</li>
+</ul>
+</li>
+</ul>
+<p>示例：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">async</span> Task&lt;ExecuteResult&lt;PagedList&lt;CustomerDemand&gt;&gt;&gt; GetCustomerDemandList(</span><br><span class="line">    [<span class="meta">FromBody</span>] QueryCustomerDemandRequest request)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// request 来自 JSON Body</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在 HTTP 层面，对应的请求大致是：</p>
+<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">POST</span> <span class="string">/api/GetCustomerDemandList</span> <span class="meta">HTTP/1.1</span></span><br><span class="line"><span class="attribute">Content-Type</span><span class="punctuation">: </span>application/json</span><br><span class="line"></span><br><span class="line"><span class="language-json"><span class="punctuation">&#123;</span></span></span><br><span class="line"><span class="language-json">  <span class="attr">&quot;pageNumber&quot;</span><span class="punctuation">:</span> <span class="number">1</span><span class="punctuation">,</span></span></span><br><span class="line"><span class="language-json">  <span class="attr">&quot;pageSize&quot;</span><span class="punctuation">:</span> <span class="number">20</span><span class="punctuation">,</span></span></span><br><span class="line"><span class="language-json">  <span class="attr">&quot;status&quot;</span><span class="punctuation">:</span> <span class="number">0</span><span class="punctuation">,</span></span></span><br><span class="line"><span class="language-json">  <span class="attr">&quot;startTime&quot;</span><span class="punctuation">:</span> <span class="string">&quot;2024-01-01&quot;</span><span class="punctuation">,</span></span></span><br><span class="line"><span class="language-json">  <span class="attr">&quot;endTime&quot;</span><span class="punctuation">:</span> <span class="string">&quot;2024-12-31&quot;</span></span></span><br><span class="line"><span class="language-json"><span class="punctuation">&#125;</span></span></span><br></pre></td></tr></table></figure>
+
+<h3><span id="2-fromform-cong-biao-dan-shu-ju-zhong-du-qu-zi-duan-he-wen-jian">2. <code>[FromForm]</code> —— 从表单数据中读取字段和文件</span><a href="#2-fromform-cong-biao-dan-shu-ju-zhong-du-qu-zi-duan-he-wen-jian" class="header-anchor">#</a></h3><ul>
+<li><strong>作用</strong>：从 <strong>表单数据</strong> 中进行模型绑定。  </li>
+<li><strong>典型数据格式</strong>：  <ul>
+<li><code>application/x-www-form-urlencoded</code>  </li>
+<li><code>multipart/form-data</code>（<strong>文件上传必须用这个</strong>）</li>
+</ul>
+</li>
+<li><strong>特殊能力</strong>：可以直接绑定 <code>IFormFile</code> &#x2F; <code>List&lt;IFormFile&gt;</code>，用于文件上传。</li>
+</ul>
+<p>示例：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> 创建客户需求</span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">[<span class="meta">HttpPost(<span class="string">&quot;AddCustomerDemand&quot;</span>)</span>]</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">async</span> Task&lt;ExecuteResult&lt;<span class="built_in">long</span>&gt;&gt; AddCustomerDemand(</span><br><span class="line">    [<span class="meta">FromForm</span>] AddCustomerDemandRequest request,</span><br><span class="line">    [<span class="meta">FromForm</span>] List&lt;IFormFile&gt;? photos)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">await</span> _customerDemandService.AddCustomerDemandAsync(request, photos);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这个接口既要接收业务字段（需求标题、内容、客户名等），又要接收多张图片文件，所以选择 <code>[FromForm]</code> 是正确的。</p>
+<h2><span id="zai-http-ceng-mian-ta-men-dao-di-chang-shi-me-yang">◆ 在 HTTP 层面，它们到底长什么样？</span><a href="#zai-http-ceng-mian-ta-men-dao-di-chang-shi-me-yang" class="header-anchor">#</a></h2><h3><span id="1-fromform-multipart-form-data-duo-bu-fen-qing-qiu-biao-dan-wen-jian">1. <code>[FromForm]</code>：<code>multipart/form-data</code> 多部分请求（表单 + 文件）</span><a href="#1-fromform-multipart-form-data-duo-bu-fen-qing-qiu-biao-dan-wen-jian" class="header-anchor">#</a></h3><p>典型 HTTP 请求头：</p>
+<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">POST</span> <span class="string">/api/AddCustomerDemand</span> <span class="meta">HTTP/1.1</span></span><br><span class="line"><span class="attribute">Content-Type</span><span class="punctuation">: </span>multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW</span><br></pre></td></tr></table></figure>
+
+<p>请求体（简化示意，仅展示结构）：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">------WebKitFormBoundary7MA4YWxkTrZu0gW</span><br><span class="line">Content-Disposition: form-data; name=&quot;request&quot;</span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line">  &quot;title&quot;: &quot;项目需求&quot;,</span><br><span class="line">  &quot;content&quot;: &quot;需要开发新功能&quot;,</span><br><span class="line">  &quot;customerName&quot;: &quot;张三&quot;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">------WebKitFormBoundary7MA4YWxkTrZu0gW</span><br><span class="line">Content-Disposition: form-data; name=&quot;photos&quot;; filename=&quot;photo1.jpg&quot;</span><br><span class="line">Content-Type: image/jpeg</span><br><span class="line"></span><br><span class="line">(这里是第一张图片的二进制数据)</span><br><span class="line"></span><br><span class="line">------WebKitFormBoundary7MA4YWxkTrZu0gW</span><br><span class="line">Content-Disposition: form-data; name=&quot;photos&quot;; filename=&quot;photo2.png&quot;</span><br><span class="line">Content-Type: image/png</span><br><span class="line"></span><br><span class="line">(这里是第二张图片的二进制数据)</span><br><span class="line"></span><br><span class="line">------WebKitFormBoundary7MA4YWxkTrZu0gW--</span><br></pre></td></tr></table></figure>
+
+<p><strong>特点：</strong></p>
+<ul>
+<li>Body 被 <strong>boundary</strong> 分成多段，每一段是一个字段或一个文件。  </li>
+<li>文本部分是可读 JSON &#x2F; 普通字符串，文件部分是二进制。  </li>
+<li><code>photos</code> 字段在服务端可以绑定到 <code>List&lt;IFormFile&gt;</code>。</li>
+</ul>
+<h3><span id="2-frombody-application-json-chun-wen-ben-qing-qiu">2. <code>[FromBody]</code>：<code>application/json</code> 纯文本请求</span><a href="#2-frombody-application-json-chun-wen-ben-qing-qiu" class="header-anchor">#</a></h3><p>典型 HTTP 请求头：</p>
+<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">POST</span> <span class="string">/api/GetCustomerDemandList</span> <span class="meta">HTTP/1.1</span></span><br><span class="line"><span class="attribute">Content-Type</span><span class="punctuation">: </span>application/json</span><br></pre></td></tr></table></figure>
+
+<p>请求体：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;pageNumber&quot;</span><span class="punctuation">:</span> <span class="number">1</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;pageSize&quot;</span><span class="punctuation">:</span> <span class="number">20</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;status&quot;</span><span class="punctuation">:</span> <span class="number">0</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;startTime&quot;</span><span class="punctuation">:</span> <span class="string">&quot;2024-01-01&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;endTime&quot;</span><span class="punctuation">:</span> <span class="string">&quot;2024-12-31&quot;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>特点：</strong></p>
+<ul>
+<li>整个 Body 是一段 JSON 字符串，没有 boundary 分隔。  </li>
+<li>在浏览器 DevTools &#x2F; Fiddler &#x2F; Postman 里 <strong>一眼就能看懂</strong>。  </li>
+<li>不适合直接夹带文件（二进制），需要的话通常会转成 Base64 放进 JSON，但那已经不是“文件上传”这个语义了。</li>
+</ul>
+<hr>
+<h2><span id="zai-diao-shi-gong-ju-li-ta-men-fen-bie-zen-me-chang-xiang">在调试工具里，它们分别怎么“长相”？</span><a href="#zai-diao-shi-gong-ju-li-ta-men-fen-bie-zen-me-chang-xiang" class="header-anchor">#</a></h2><p>在 Postman 或类似 API 工具中：</p>
+<ul>
+<li><p><code>[FromForm]</code>：</p>
+<ul>
+<li>使用 <strong><code>form-data</code></strong> 选项。  </li>
+<li>每一行是一个键值：  <ul>
+<li>文本字段：<code>Type</code>、<code>Barcode</code> 等 → 类型是 <code>Text</code>&#x2F;<code>String</code>。  </li>
+<li>文件字段：<code>photos</code> → 类型必须选 <strong><code>File</code></strong>，并从本地选择文件。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><code>[FromBody]</code>：</p>
+<ul>
+<li>使用 <strong><code>raw</code> + <code>JSON</code></strong> 选项。  </li>
+<li>直接在文本框里写 JSON 对象。</li>
+</ul>
+</li>
+</ul>
+<p>在 Chrome DevTools &#x2F; Fiddler 中：</p>
+<ul>
+<li><p><code>[FromForm]</code> 请求的 Request Body：  </p>
+<ul>
+<li>会看到一堆 <code>------WebKitFormBoundary...</code> 分隔符和 <code>Content-Disposition</code> 头。  </li>
+<li>文本部分清晰可读，文件部分通常显示为“乱码”或十六进制。</li>
+</ul>
+</li>
+<li><p><code>[FromBody]</code> 请求的 Request Body：  </p>
+<ul>
+<li>是格式良好的 JSON，可以直接展开 &#x2F; 折叠字段。</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h2><span id="dian-xing-cai-keng-wei-shi-me-hou-duan-shou-bu-dao-tu-pian">典型踩坑：为什么后端收不到图片？</span><a href="#dian-xing-cai-keng-wei-shi-me-hou-duan-shou-bu-dao-tu-pian" class="header-anchor">#</a></h2><p>在你提供的场景里，接口签名大致是这样：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">[<span class="meta">HttpPost(<span class="string">&quot;AddCustomerDemand&quot;</span>)</span>]</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">async</span> Task&lt;ExecuteResult&lt;<span class="built_in">long</span>&gt;&gt; AddCustomerDemand(</span><br><span class="line">    [<span class="meta">FromForm</span>] AddCustomerDemandRequest request,</span><br><span class="line">    [<span class="meta">FromForm</span>] List&lt;IFormFile&gt;? photos)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">await</span> _customerDemandService.AddCustomerDemandAsync(request, photos);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>代码本身没有问题，但 <strong>后端收不到 <code>photos</code></strong>，常见原因有几类。</p>
+<h3><span id="1-postman-can-shu-lei-xing-she-zhi-cuo-wu-zui-chang-jian">1. Postman 参数类型设置错误（最常见）</span><a href="#1-postman-can-shu-lei-xing-she-zhi-cuo-wu-zui-chang-jian" class="header-anchor">#</a></h3><p>在 Postman 里，如果你这样设置：</p>
+<ul>
+<li>参数名：<code>photos</code>  </li>
+<li>参数类型：<code>Text</code> &#x2F; <code>String</code>  </li>
+<li>参数值：<code>屏幕截图2024-...</code>（只是一个文件名字符串）</li>
+</ul>
+<p>那么：</p>
+<ul>
+<li>HTTP 实际上传的是一段文本，而不是二进制文件。  </li>
+<li>ASP.NET Core 的模型绑定不会把它识别成 <code>IFormFile</code>，于是 <code>photos</code> 就是 <code>null</code> 或空列表。</li>
+</ul>
+<blockquote>
+<p>注意：在 Postman 里，只有参数类型选成 <strong>File</strong> 并选择本地文件时，才是真正上传文件本身。</p>
+</blockquote>
+<p><strong>正确做法</strong>：</p>
+<ul>
+<li>在 <code>form-data</code> 下：  <ul>
+<li>文本字段（如 <code>Type</code>、<code>Barcode</code>、<code>DeviceName</code> 等）类型选 <code>Text</code>。  </li>
+<li>文件字段 <code>photos</code> 类型必须选 <strong><code>File</code></strong>，然后点击右侧按钮从本地选择图片。</li>
+</ul>
+</li>
+</ul>
+<p>可以想象成：<br>→ <strong><code>Text</code> 是“发一段字符串”，<code>File</code> 才是“发一个真正的文件”。</strong></p>
+<h3><span id="2-qing-qiu-mo-xing-li-bu-gai-zai-ding-yi-wen-jian-shu-xing">2. 请求模型里不该再定义文件属性</span><a href="#2-qing-qiu-mo-xing-li-bu-gai-zai-ding-yi-wen-jian-shu-xing" class="header-anchor">#</a></h3><p>请求对象通常写成：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">AddCustomerDemandRequest</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="built_in">string</span> Type &#123; <span class="keyword">get</span>; <span class="keyword">set</span>; &#125;</span><br><span class="line">    <span class="keyword">public</span> <span class="built_in">string</span> Barcode &#123; <span class="keyword">get</span>; <span class="keyword">set</span>; &#125;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">    <span class="comment">// 千万不要在这里再加 IFormFile Photos</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>如果你在 <code>AddCustomerDemandRequest</code> 里也写了一个 <code>IFormFile Photos</code> 属性，同时控制器方法参数又有一个单独的 <code>List&lt;IFormFile&gt; photos</code>，就容易导致：</p>
+<ul>
+<li>模型绑定不知道该把哪一段 form-data 绑定到哪里；  </li>
+<li>最终表现就是某些字段是 null，或者绑定不完整。</li>
+</ul>
+<p><strong>建议</strong>：<br>→ <strong>字段归字段，文件归文件</strong>，请求 DTO 里只放纯数据字段，文件统一用单独的 <code>IFormFile</code> &#x2F; <code>List&lt;IFormFile&gt;</code> 参数接收。</p>
+<h3><span id="3-wen-jian-da-xiao-xian-zhi-x2f-pei-zhi-wen-ti">3. 文件大小限制 &#x2F; 配置问题</span><a href="#3-wen-jian-da-xiao-xian-zhi-x2f-pei-zhi-wen-ti" class="header-anchor">#</a></h3><p>如果你上传的图片比较大，还需要注意 ASP.NET Core 的默认上传大小限制。</p>
+<p>可以在 <code>Program.cs</code>（或 <code>Startup.cs</code>）里配置表单上传大小：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">using</span> Microsoft.AspNetCore.Http.Features;</span><br><span class="line"></span><br><span class="line">builder.Services.Configure&lt;FormOptions&gt;(options =&gt;</span><br><span class="line">&#123;</span><br><span class="line">    options.MultipartBodyLengthLimit = <span class="number">104</span>_857_600; <span class="comment">// 100 MB</span></span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<p>如果不配置：</p>
+<ul>
+<li>上传超大文件时，可能会被服务器直接拒绝；  </li>
+<li>控制器方法甚至不会被调用，更别说拿到 <code>photos</code> 了。</li>
+</ul>
+<h3><span id="4-que-shao-ri-zhi-wu-fa-que-ren-dao-di-shou-dao-liao-shi-me">4. 缺少日志，无法确认“到底收到了什么”</span><a href="#4-que-shao-ri-zhi-wu-fa-que-ren-dao-di-shou-dao-liao-shi-me" class="header-anchor">#</a></h3><p>在排查这类问题时，建议先加入一些日志：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">[<span class="meta">HttpPost(<span class="string">&quot;AddCustomerDemand&quot;</span>)</span>]</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">async</span> Task&lt;ExecuteResult&lt;<span class="built_in">long</span>&gt;&gt; AddCustomerDemand(</span><br><span class="line">    [<span class="meta">FromForm</span>] AddCustomerDemandRequest request,</span><br><span class="line">    [<span class="meta">FromForm</span>] List&lt;IFormFile&gt;? photos)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (photos == <span class="literal">null</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        _logger.LogWarning(<span class="string">&quot;photos 参数为 null&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">    &#123;</span><br><span class="line">        _logger.LogInformation(<span class="string">$&quot;接收到 <span class="subst">&#123;photos.Count&#125;</span> 个文件：&quot;</span>);</span><br><span class="line">        <span class="keyword">foreach</span> (<span class="keyword">var</span> <span class="keyword">file</span> <span class="keyword">in</span> photos)</span><br><span class="line">        &#123;</span><br><span class="line">            _logger.LogInformation(<span class="string">$&quot;文件名: <span class="subst">&#123;<span class="keyword">file</span>.FileName&#125;</span>, 大小: <span class="subst">&#123;<span class="keyword">file</span>.Length&#125;</span> bytes&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">await</span> _customerDemandService.AddCustomerDemandAsync(request, photos);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>有了这些日志，你可以快速判断：</p>
+<ul>
+<li>是 Postman 没传上来，还是中间被某个中间件 &#x2F; 限制拦下了；  </li>
+<li>还是已经到控制器，但文件列表为空。</li>
+</ul>
+<h2><span id="shi-zhan-xiao-jie-ru-he-xuan-yong-fromform-x2f-frombody">实战小结：如何选用 FromForm &#x2F; FromBody？</span><a href="#shi-zhan-xiao-jie-ru-he-xuan-yong-fromform-x2f-frombody" class="header-anchor">#</a></h2><p>可以按照下面这个小清单来做决策：</p>
+<ul>
+<li><p><strong>只接收结构化数据（JSON&#x2F;XML）</strong>：  </p>
+<ul>
+<li>接口参数：<code>[FromBody] SomeRequestDto request</code>  </li>
+<li>Content-Type：<code>application/json</code></li>
+</ul>
+</li>
+<li><p><strong>要接收文件（图片 &#x2F; 附件）</strong>：  </p>
+<ul>
+<li>接口参数：<code>[FromForm] SomeRequestDto request, [FromForm] List&lt;IFormFile&gt; files</code>  </li>
+<li>Content-Type：<code>multipart/form-data</code>  </li>
+<li>Postman 中：文件字段类型必须选 <code>File</code>。</li>
+</ul>
+</li>
+<li><p><strong>兼容传统 HTML 表单提交</strong>：  </p>
+<ul>
+<li><code>application/x-www-form-urlencoded</code> 或 <code>multipart/form-data</code> → 优先用 <code>[FromForm]</code>。</li>
+</ul>
+</li>
+<li><p><strong>日志 + 抓包联合排查</strong>：  </p>
+<ul>
+<li>先用日志确认控制器层到底收到什么；  </li>
+<li>再用 DevTools &#x2F; Fiddler &#x2F; Postman 看实际请求内容（Content-Type、Body 结构）是否符合预期。</li>
+</ul>
+</li>
+</ul>
+<p>如果你把这些原则和检查点都走一遍，再遇到 FromForm &#x2F; FromBody 相关的问题，基本都能很快定位到“是写法问题，还是请求格式问题”，而不再停留在“感觉差不多”的模糊状态。希望这篇整理能帮你之后在设计 ASP.NET Core API 时，少踩一些关于参数绑定和文件上传的坑。</p>
 
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://example.com/2026/02/11/GitHub-Pages-%E9%9D%99%E6%80%81%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/" data-id="cuidw1eC6pwMOVR2GmPSEy5Ck" data-title="GitHub Pages + 静态博客搭建指南" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="http://example.com/2026/02/11/ASP.NET-Core-FromForm-%E4%B8%8E-FromBody-%E5%8C%BA%E5%88%AB%E5%92%8C%E5%B8%B8%E8%A7%81%E5%9D%91/" data-id="cuidju9H3QZLpiq_CyZWIShxd" data-title="ASP.NET Core 中 FromForm 与 FromBody 的区别和常见坑" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
-  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/GitHub-Pages/" rel="tag">GitHub Pages</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Hexo/" rel="tag">Hexo</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA/" rel="tag">博客搭建</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%95%99%E7%A8%8B/" rel="tag">教程</a></li></ul>
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/ASP-NET-Core/" rel="tag">ASP.NET Core</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/FromBody/" rel="tag">FromBody</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/FromForm/" rel="tag">FromForm</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Web-API/" rel="tag">Web API</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0/" rel="tag">文件上传</a></li></ul>
 
     </footer>
   </div>
@@ -240,7 +357,44 @@
     <div class="e-content article-entry" itemprop="articleBody">
       
         <p>代码首先是 <strong>给人看的沟通介质</strong>，其次才是给机器执行的指令。KISS（Keep It Simple, Stupid）和 DRY（Don’t Repeat Yourself）都是好原则，但在真实项目里，它们有时会发生冲突——这时，<strong>往往应该优先选择简单、好懂的 KISS，而不是一味追求 DRY。</strong></p>
-<h2 id="结论先行"><a href="#结论先行" class="headerlink" title="结论先行"></a>结论先行</h2><ul>
+<div class="toc">
+
+<!-- toc -->
+
+<ul>
+<li><a href="#jie-lun-xian-xing">结论先行</a></li>
+<li><a href="#bei-jing-yu-wen-ti">背景与问题</a></li>
+<li><a href="#he-xin-dui-bi-kiss-vs-dry">核心对比：KISS vs DRY</a></li>
+<li><a href="#shi-me-shi-hou-you-xian-kiss">什么时候优先 KISS</a><ul>
+<li><a href="#1-di-yi-ci-di-er-ci-xie-chu-lei-si-luo-ji-shi">1. 第一次、第二次写出类似逻辑时</a></li>
+<li><a href="#2-ye-wu-yu-yi-bu-tong-zhi-shi-chang-de-xiang-si">2. 业务语义不同，只是长得相似</a></li>
+<li><a href="#3-tuan-dui-neng-li-ceng-ci-bu-qi-shi">3. 团队能力层次不齐时</a></li>
+<li><a href="#4-diao-shi-pai-zhang-you-xian-de-guan-jian-lu-jing">4. 调试、排障优先的关键路径</a></li>
+<li><a href="#5-lin-shi-dai-ma-yi-ci-xing-jiao-ben">5. 临时代码、一次性脚本</a></li>
+</ul>
+</li>
+<li><a href="#shi-me-shi-hou-you-xian-dry">什么时候优先 DRY</a><ul>
+<li><a href="#1-zhen-zheng-wan-quan-xiang-tong-de-luo-ji">1. 真正完全相同的逻辑</a></li>
+<li><a href="#2-an-quan-he-gui-deng-gao-feng-xian-luo-ji">2. 安全&#x2F;合规等高风险逻辑</a></li>
+<li><a href="#3-fu-za-wen-ding-de-suan-fa">3. 复杂、稳定的算法</a></li>
+<li><a href="#4-yi-jing-bei-duo-ci-yan-zheng-de-wen-ding-chou-xiang">4. 已经被多次验证的稳定抽象</a></li>
+</ul>
+</li>
+<li><a href="#ke-luo-di-de-shi-jian-gui-ze-qing-dan">可落地的实践规则&#x2F;清单</a><ul>
+<li><a href="#gui-ze-1-san-ci-fa-ze">规则 1：三次法则</a></li>
+<li><a href="#gui-ze-2-cong-ju-ti-dao-chou-xiang-er-bu-shi-fan-guo-lai">规则 2：从具体到抽象，而不是反过来</a></li>
+<li><a href="#gui-ze-3-yu-yi-chong-yu-xing-shi">规则 3：语义重于形式</a></li>
+<li><a href="#gui-ze-4-yong-ke-shan-chu-xing-heng-liang-she-ji-hao-pi">规则 4：用“可删除性”衡量设计好坏</a></li>
+<li><a href="#gui-ze-5-jia-she-du-zhe-shi-ban-nian-hou-de-zi-ji-xin-tong-shi">规则 5：假设读者是“半年后的自己 + 新同事”</a></li>
+</ul>
+</li>
+<li><a href="#xiao-jie">小结</a></li>
+</ul>
+<!-- tocstop -->
+
+</div>
+
+<h2><span id="jie-lun-xian-xing">结论先行</span><a href="#jie-lun-xian-xing" class="header-anchor">#</a></h2><ul>
 <li><strong>一句话结论</strong>：当“代码更简单直白”和“代码更抽象更复用”发生冲突时，多数业务场景下应优先 KISS，让代码一眼能看懂，再在不牺牲可读性的前提下追求 DRY。</li>
 <li><strong>适用前提</strong>：<ul>
 <li>代码会被团队多人长期维护，而不是你一个人写完就丢</li>
@@ -249,7 +403,7 @@
 </ul>
 </li>
 </ul>
-<h2 id="背景与问题"><a href="#背景与问题" class="headerlink" title="背景与问题"></a>背景与问题</h2><p>在很多团队中，大家被教育要“消除一切重复、保持优雅抽象”，结果常见几个现象：</p>
+<h2><span id="bei-jing-yu-wen-ti">背景与问题</span><a href="#bei-jing-yu-wen-ti" class="header-anchor">#</a></h2><p>在很多团队中，大家被教育要“消除一切重复、保持优雅抽象”，结果常见几个现象：</p>
 <ul>
 <li>为了避免两三处看起来相似的代码，就设计一套“策略模式 + 工厂 + 配置驱动”的复杂架构</li>
 <li>为了 DRY，把不同业务语义的逻辑硬塞进同一个函数里，只靠参数区分</li>
@@ -262,7 +416,7 @@
 <li>重构成本越来越高，谁都不敢动</li>
 </ul>
 <p>这就是为什么很多有经验的工程师，最终都会回到一句话：<strong>“简单第一，抽象第二。”</strong></p>
-<h2 id="核心对比：KISS-vs-DRY"><a href="#核心对比：KISS-vs-DRY" class="headerlink" title="核心对比：KISS vs DRY"></a>核心对比：KISS vs DRY</h2><ul>
+<h2><span id="he-xin-dui-bi-kiss-vs-dry">核心对比：KISS vs DRY</span><a href="#he-xin-dui-bi-kiss-vs-dry" class="header-anchor">#</a></h2><ul>
 <li><p><strong>KISS：Keep It Simple, Stupid</strong></p>
 <ul>
 <li><strong>目标</strong>：让代码尽量简单、直白、易读易懂</li>
@@ -279,7 +433,7 @@
 </li>
 </ul>
 <p><strong>关键点在于：错误的抽象，比适度的重复更可怕。</strong></p>
-<h2 id="什么时候优先-KISS"><a href="#什么时候优先-KISS" class="headerlink" title="什么时候优先 KISS"></a>什么时候优先 KISS</h2><h3 id="1-第一次、第二次写出类似逻辑时"><a href="#1-第一次、第二次写出类似逻辑时" class="headerlink" title="1. 第一次、第二次写出类似逻辑时"></a>1. 第一次、第二次写出类似逻辑时</h3><p>第一次写代码时，不要为“未来可能的复用”设计一大堆抽象；第二次遇到类似逻辑，也可以先接受少量重复，只要保证：</p>
+<h2><span id="shi-me-shi-hou-you-xian-kiss">什么时候优先 KISS</span><a href="#shi-me-shi-hou-you-xian-kiss" class="header-anchor">#</a></h2><h3><span id="1-di-yi-ci-di-er-ci-xie-chu-lei-si-luo-ji-shi">1. 第一次、第二次写出类似逻辑时</span><a href="#1-di-yi-ci-di-er-ci-xie-chu-lei-si-luo-ji-shi" class="header-anchor">#</a></h3><p>第一次写代码时，不要为“未来可能的复用”设计一大堆抽象；第二次遇到类似逻辑，也可以先接受少量重复，只要保证：</p>
 <ul>
 <li>函数名直接说清楚在干什么</li>
 <li>逻辑没有被莫名其妙地“藏”在框架里</li>
@@ -288,7 +442,7 @@
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">calculate_income_tax</span>(<span class="params">income</span>):</span><br><span class="line">    <span class="keyword">return</span> income * <span class="number">0.15</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">calculate_sales_tax</span>(<span class="params">amount</span>):</span><br><span class="line">    <span class="keyword">return</span> amount * <span class="number">0.08</span></span><br></pre></td></tr></table></figure>
 
 <p>看起来有点“重复”，但<strong>语义不同</strong>（所得税 vs 销售税），未来演化方向也可能完全不一样。此时如果强行抽象成一个 <code>calculate_tax(amount, tax_type)</code>，反而会让代码更难维护。</p>
-<h3 id="2-业务语义不同，只是长得相似"><a href="#2-业务语义不同，只是长得相似" class="headerlink" title="2. 业务语义不同，只是长得相似"></a>2. 业务语义不同，只是长得相似</h3><p>表面相似 ≠ 可以合并。</p>
+<h3><span id="2-ye-wu-yu-yi-bu-tong-zhi-shi-chang-de-xiang-si">2. 业务语义不同，只是长得相似</span><a href="#2-ye-wu-yu-yi-bu-tong-zhi-shi-chang-de-xiang-si" class="header-anchor">#</a></h3><p>表面相似 ≠ 可以合并。</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span> <span class="title function_">sendInvoice</span><span class="params">(Invoice invoice)</span> &#123; ... &#125;  <span class="comment">// 财务流程</span></span><br><span class="line"><span class="keyword">void</span> <span class="title function_">sendEmail</span><span class="params">(Email email)</span> &#123; ... &#125;        <span class="comment">// 通信流程</span></span><br><span class="line"><span class="keyword">void</span> <span class="title function_">sendPacket</span><span class="params">(Packet packet)</span> &#123; ... &#125;     <span class="comment">// 网络传输</span></span><br></pre></td></tr></table></figure>
 
 <p>这三个函数虽然都叫“send”，但业务完全不同，强行抽象成一个 <code>send(Object payload, SendType type)</code>：</p>
@@ -297,26 +451,26 @@
 <li>任何一个流程的修改，都可能影响到其他流程</li>
 </ul>
 <p>这种情况下，<strong>保持三个清晰的函数，比一个“超级通用 send”要健康得多。</strong></p>
-<h3 id="3-团队能力层次不齐时"><a href="#3-团队能力层次不齐时" class="headerlink" title="3. 团队能力层次不齐时"></a>3. 团队能力层次不齐时</h3><p>如果团队里有新人、有转岗同事，或者外包、实习生也会接触这份代码：</p>
+<h3><span id="3-tuan-dui-neng-li-ceng-ci-bu-qi-shi">3. 团队能力层次不齐时</span><a href="#3-tuan-dui-neng-li-ceng-ci-bu-qi-shi" class="header-anchor">#</a></h3><p>如果团队里有新人、有转岗同事，或者外包、实习生也会接触这份代码：</p>
 <ul>
 <li>过于“聪明”的抽象，只会变成少数人的“特权”</li>
 <li>简单直白的代码，才是全员都能理解和维护的资产</li>
 </ul>
 <p><strong>代码不是用来展示智商的，而是用来降低团队总认知成本的。</strong></p>
-<h3 id="4-调试、排障优先的关键路径"><a href="#4-调试、排障优先的关键路径" class="headerlink" title="4. 调试、排障优先的关键路径"></a>4. 调试、排障优先的关键路径</h3><p>例如支付、下单、风控等核心流程，一旦出问题需要快速定位。此时：</p>
+<h3><span id="4-diao-shi-pai-zhang-you-xian-de-guan-jian-lu-jing">4. 调试、排障优先的关键路径</span><a href="#4-diao-shi-pai-zhang-you-xian-de-guan-jian-lu-jing" class="header-anchor">#</a></h3><p>例如支付、下单、风控等核心流程，一旦出问题需要快速定位。此时：</p>
 <ul>
 <li>KISS 风格的代码：从异常栈一跳就能看到真实业务逻辑</li>
 <li>过度 DRY 的代码：需要在策略、工厂、适配层之间来回跳转</li>
 </ul>
 <p>在这些地方，多写几行重复代码，往往比引入一层新的抽象更划算。</p>
-<h3 id="5-临时代码、一次性脚本"><a href="#5-临时代码、一次性脚本" class="headerlink" title="5. 临时代码、一次性脚本"></a>5. 临时代码、一次性脚本</h3><p>例如：</p>
+<h3><span id="5-lin-shi-dai-ma-yi-ci-xing-jiao-ben">5. 临时代码、一次性脚本</span><a href="#5-lin-shi-dai-ma-yi-ci-xing-jiao-ben" class="header-anchor">#</a></h3><p>例如：</p>
 <ul>
 <li>一次性数据迁移脚本</li>
 <li>单次活动的统计脚本</li>
 </ul>
 <p>这类代码生命周期很短，重点是“正确而清晰”，而不是“优雅而通用”。为它们设计复杂抽象，几乎肯定是在浪费时间。</p>
-<h2 id="什么时候优先-DRY"><a href="#什么时候优先-DRY" class="headerlink" title="什么时候优先 DRY"></a>什么时候优先 DRY</h2><p>当然，DRY 依然非常重要，只是需要用在 <strong>真的合适的地方</strong>。</p>
-<h3 id="1-真正完全相同的逻辑"><a href="#1-真正完全相同的逻辑" class="headerlink" title="1. 真正完全相同的逻辑"></a>1. 真正完全相同的逻辑</h3><p>典型如：</p>
+<h2><span id="shi-me-shi-hou-you-xian-dry">什么时候优先 DRY</span><a href="#shi-me-shi-hou-you-xian-dry" class="header-anchor">#</a></h2><p>当然，DRY 依然非常重要，只是需要用在 <strong>真的合适的地方</strong>。</p>
+<h3><span id="1-zhen-zheng-wan-quan-xiang-tong-de-luo-ji">1. 真正完全相同的逻辑</span><a href="#1-zhen-zheng-wan-quan-xiang-tong-de-luo-ji" class="header-anchor">#</a></h3><p>典型如：</p>
 <ul>
 <li>价格计算规则</li>
 <li>折扣计算逻辑</li>
@@ -327,27 +481,27 @@
 <li>抽到一个明确命名的函数&#x2F;模块中</li>
 <li>保证修改只需要在一个地方进行</li>
 </ul>
-<h3 id="2-安全-合规等高风险逻辑"><a href="#2-安全-合规等高风险逻辑" class="headerlink" title="2. 安全&#x2F;合规等高风险逻辑"></a>2. 安全&#x2F;合规等高风险逻辑</h3><p>如：</p>
+<h3><span id="2-an-quan-x2f-he-gui-deng-gao-feng-xian-luo-ji">2. 安全&#x2F;合规等高风险逻辑</span><a href="#2-an-quan-x2f-he-gui-deng-gao-feng-xian-luo-ji" class="header-anchor">#</a></h3><p>如：</p>
 <ul>
 <li>加解密算法</li>
 <li>认证、授权</li>
 <li>风控规则</li>
 </ul>
 <p>这些逻辑一旦出问题，影响巨大，<strong>必须单点维护</strong>，坚决不能复制粘贴到各个角落。</p>
-<h3 id="3-复杂、稳定的算法"><a href="#3-复杂、稳定的算法" class="headerlink" title="3. 复杂、稳定的算法"></a>3. 复杂、稳定的算法</h3><p>例如推荐算法、路径规划算法、通用缓存封装等：</p>
+<h3><span id="3-fu-za-wen-ding-de-suan-fa">3. 复杂、稳定的算法</span><a href="#3-fu-za-wen-ding-de-suan-fa" class="header-anchor">#</a></h3><p>例如推荐算法、路径规划算法、通用缓存封装等：</p>
 <ul>
 <li>本身就不容易理解</li>
 <li>又需要在多处使用</li>
 </ul>
 <p>这类逻辑非常适合用 DRY 固化成“黑盒能力”，对外只暴露清晰的接口。</p>
-<h3 id="4-已经被多次验证的稳定抽象"><a href="#4-已经被多次验证的稳定抽象" class="headerlink" title="4. 已经被多次验证的稳定抽象"></a>4. 已经被多次验证的稳定抽象</h3><p>当你的项目发展到一定阶段，有些模式已经被事实证明是合适、稳定的，例如：</p>
+<h3><span id="4-yi-jing-bei-duo-ci-yan-zheng-de-wen-ding-chou-xiang">4. 已经被多次验证的稳定抽象</span><a href="#4-yi-jing-bei-duo-ci-yan-zheng-de-wen-ding-chou-xiang" class="header-anchor">#</a></h3><p>当你的项目发展到一定阶段，有些模式已经被事实证明是合适、稳定的，例如：</p>
 <ul>
 <li>统一的错误处理封装</li>
 <li>标准化的接口返回结构</li>
 <li>通用的日志埋点工具</li>
 </ul>
 <p>此时把这些抽象提炼出来并复用，是非常值得的投资。</p>
-<h2 id="可落地的实践规则-清单"><a href="#可落地的实践规则-清单" class="headerlink" title="可落地的实践规则&#x2F;清单"></a>可落地的实践规则&#x2F;清单</h2><h3 id="规则-1：三次法则"><a href="#规则-1：三次法则" class="headerlink" title="规则 1：三次法则"></a>规则 1：三次法则</h3><ul>
+<h2><span id="ke-luo-di-de-shi-jian-gui-ze-x2f-qing-dan">可落地的实践规则&#x2F;清单</span><a href="#ke-luo-di-de-shi-jian-gui-ze-x2f-qing-dan" class="header-anchor">#</a></h2><h3><span id="gui-ze-1-san-ci-fa-ze">规则 1：三次法则</span><a href="#gui-ze-1-san-ci-fa-ze" class="header-anchor">#</a></h3><ul>
 <li><strong>第一次</strong>：直接写最简单的代码，优先让自己和同事看懂</li>
 <li><strong>第二次</strong>：遇到类似需求时，可以复制并稍加调整，同时在脑海中记一下“这里可能存在共性”</li>
 <li><strong>第三次</strong>：再次遇到类似场景时，认真评估是否抽象、抽象到什么程度</li>
@@ -355,14 +509,14 @@
 <blockquote>
 <p>如果你只见过两次类似代码就急着抽象，十有八九会抽象错。</p>
 </blockquote>
-<h3 id="规则-2：从具体到抽象，而不是反过来"><a href="#规则-2：从具体到抽象，而不是反过来" class="headerlink" title="规则 2：从具体到抽象，而不是反过来"></a>规则 2：从具体到抽象，而不是反过来</h3><p>建议的演进路径是：</p>
+<h3><span id="gui-ze-2-cong-ju-ti-dao-chou-xiang-er-bu-shi-fan-guo-lai">规则 2：从具体到抽象，而不是反过来</span><a href="#gui-ze-2-cong-ju-ti-dao-chou-xiang-er-bu-shi-fan-guo-lai" class="header-anchor">#</a></h3><p>建议的演进路径是：</p>
 <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">具体实现 1 → 具体实现 2 → 识别真正共性 → 抽象成适度的公共能力</span><br></pre></td></tr></table></figure>
 
 <p>而不是：</p>
 <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">先想象一个“通用框架” → 再强行把所有需求塞进这个框架</span><br></pre></td></tr></table></figure>
 
 <p>后者几乎一定会走向过度设计。</p>
-<h3 id="规则-3：语义重于形式"><a href="#规则-3：语义重于形式" class="headerlink" title="规则 3：语义重于形式"></a>规则 3：语义重于形式</h3><ul>
+<h3><span id="gui-ze-3-yu-yi-chong-yu-xing-shi">规则 3：语义重于形式</span><a href="#gui-ze-3-yu-yi-chong-yu-xing-shi" class="header-anchor">#</a></h3><ul>
 <li>看起来很像的代码，如果<strong>业务语义不同</strong>，就不要为 DRY 而合并</li>
 <li>函数名、参数名、模块名要尽量反映真实业务，而不是追求所谓的“通用性”</li>
 </ul>
@@ -372,12 +526,12 @@
 <p>也不要硬塞进一个：</p>
 <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">createDocument</span>(<span class="params">type</span>) &#123; ... &#125;</span><br></pre></td></tr></table></figure>
 
-<h3 id="规则-4：用“可删除性”衡量设计好坏"><a href="#规则-4：用“可删除性”衡量设计好坏" class="headerlink" title="规则 4：用“可删除性”衡量设计好坏"></a>规则 4：用“可删除性”衡量设计好坏</h3><p>问自己一个问题：<strong>“如果哪天业务变了，这块代码能不能比较轻松地被删除或替换？”</strong></p>
+<h3><span id="gui-ze-4-yong-ke-shan-chu-xing-heng-liang-she-ji-hao-pi">规则 4：用“可删除性”衡量设计好坏</span><a href="#gui-ze-4-yong-ke-shan-chu-xing-heng-liang-she-ji-hao-pi" class="header-anchor">#</a></h3><p>问自己一个问题：<strong>“如果哪天业务变了，这块代码能不能比较轻松地被删除或替换？”</strong></p>
 <ul>
 <li>如果一段代码和周围高度耦合、牵一发而动全身，往往说明抽象层级太复杂</li>
 <li>好的 KISS 风格代码，删除一块通常只影响很小的范围</li>
 </ul>
-<h3 id="规则-5：假设读者是“半年后的自己-新同事”"><a href="#规则-5：假设读者是“半年后的自己-新同事”" class="headerlink" title="规则 5：假设读者是“半年后的自己 + 新同事”"></a>规则 5：假设读者是“半年后的自己 + 新同事”</h3><p>写代码时不妨这样假想：</p>
+<h3><span id="gui-ze-5-jia-she-du-zhe-shi-ban-nian-hou-de-zi-ji-xin-tong-shi">规则 5：假设读者是“半年后的自己 + 新同事”</span><a href="#gui-ze-5-jia-she-du-zhe-shi-ban-nian-hou-de-zi-ji-xin-tong-shi" class="header-anchor">#</a></h3><p>写代码时不妨这样假想：</p>
 <ul>
 <li>半年后，你已经忘了这个需求的细节</li>
 <li>新来一个同事要接这个模块</li>
@@ -388,7 +542,7 @@
 <li>是否需要在 4、5 个文件之间来回跳转才能拼出全景？</li>
 </ul>
 <p>如果答案不好，通常意味着当前的抽象过头了。</p>
-<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><ul>
+<h2><span id="xiao-jie">小结</span><a href="#xiao-jie" class="header-anchor">#</a></h2><ul>
 <li><strong>KISS 和 DRY 都很重要，但它们不是同一优先级。</strong></li>
 <li>在绝大多数业务场景下：<ul>
 <li><strong>先保证简单、直白、易懂（KISS）</strong></li>
@@ -402,11 +556,629 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://example.com/2026/02/11/KISS-%E4%B8%8E-DRY-%E5%9C%A8%E4%BB%A3%E7%A0%81%E4%B8%AD%E7%9A%84%E5%8F%96%E8%88%8D/" data-id="cuidovSrw1QZUBiB4PkC0xMnO" data-title="KISS 原则有时比 DRY 更重要" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="http://example.com/2026/02/11/KISS-%E4%B8%8E-DRY-%E5%9C%A8%E4%BB%A3%E7%A0%81%E4%B8%AD%E7%9A%84%E5%8F%96%E8%88%8D/" data-id="cuid47HIjyzZVS0k3tggA-ypr" data-title="KISS 原则有时比 DRY 更重要" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
   <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/DRY/" rel="tag">DRY</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/KISS/" rel="tag">KISS</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E4%BB%A3%E7%A0%81%E8%AE%BE%E8%AE%A1/" rel="tag">代码设计</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E7%BC%96%E7%A0%81%E5%8E%9F%E5%88%99/" rel="tag">编码原则</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-GitHub-Pages-静态博客搭建指南" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2026/02/11/GitHub-Pages-%E9%9D%99%E6%80%81%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/" class="article-date">
+  <time class="dt-published" datetime="2026-02-10T16:00:00.000Z" itemprop="datePublished">2026-02-11</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/%E6%95%99%E7%A8%8B/">教程</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2026/02/11/GitHub-Pages-%E9%9D%99%E6%80%81%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/">GitHub Pages + 静态博客搭建指南</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>我来为你提供一份清晰、详细、可操作的 GitHub Pages + 静态博客搭建指南。这个方案完全免费，非常适合记录技术内容。</p>
+<p>我将以 <strong>Hexo + GitHub Pages</strong> 这套最流行、对新手最友好的组合为例，带你一步步完成。整个过程大约需要 30-60分钟。</p>
+<div class="toc">
+
+<!-- toc -->
+
+<ul>
+<li><a href="#he-xin-yuan-li-tu-jie">核心原理图解</a></li>
+<li><a href="#di-yi-bu-fen-qian-qi-zhun-bei-zhi-xu-zuo-yi-ci">第一部分：前期准备（只需做一次）</a><ul>
+<li><a href="#di-1-bu-zhu-ce-github-zhang-hu">第1步：注册GitHub账户</a></li>
+<li><a href="#di-2-bu-an-zhuang-bi-bei-ruan-jian">第2步：安装必备软件</a></li>
+<li><a href="#di-3-bu-pei-zhi-git-shen-fen">第3步：配置Git身份</a></li>
+</ul>
+</li>
+<li><a href="#di-er-bu-fen-chuang-jian-github-pages-cang-ku-5-fen-zhong">第二部分：创建GitHub Pages仓库（5分钟）</a></li>
+<li><a href="#di-san-bu-fen-ben-di-da-jian-hexo-bo-ke-15-fen-zhong">第三部分：本地搭建Hexo博客（15分钟）</a><ul>
+<li><a href="#di-1-bu-an-zhuang-hexo-ming-ling-xing-gong-ju">第1步：安装Hexo命令行工具</a></li>
+<li><a href="#di-2-bu-chu-shi-hua-ni-de-bo-ke-wen-jian-jia">第2步：初始化你的博客文件夹</a></li>
+<li><a href="#di-3-bu-ben-di-yu-lan-bo-ke">第3步：本地预览博客</a></li>
+</ul>
+</li>
+<li><a href="#di-si-bu-fen-guan-lian-ben-di-bo-ke-yu-github-cang-ku-bing-bu-shu-10-fen-zhong">第四部分：关联本地博客与GitHub仓库并部署（10分钟）</a><ul>
+<li><a href="#di-1-bu-an-zhuang-bu-shu-cha-jian">第1步：安装部署插件</a></li>
+<li><a href="#di-2-bu-xiu-gai-bo-ke-pei-zhi-wen-jian">第2步：修改博客配置文件</a></li>
+<li><a href="#di-3-bu-sheng-cheng-jing-tai-wen-jian-bing-bu-shu-dao-github">第3步：生成静态文件并部署到GitHub</a></li>
+<li><a href="#di-4-bu-jian-zheng-qi-ji">第4步：见证奇迹</a></li>
+</ul>
+</li>
+<li><a href="#di-wu-bu-fen-kai-shi-xie-zuo-he-xin">第五部分：开始写作（核心！）</a><ul>
+<li><a href="#ru-he-xie-yi-pian-xin-wen-zhang">如何写一篇新文章？</a></li>
+<li><a href="#cha-ru-tu-pian">插入图片</a></li>
+</ul>
+</li>
+<li><a href="#hou-xu-you-hua-yu-jian-yi">后续优化与建议</a></li>
+<li><a href="#yu-dao-wen-ti-zen-me-ban">遇到问题怎么办？</a></li>
+<li><a href="#zui-hou">最后</a></li>
+</ul>
+<!-- tocstop -->
+
+</div>
+
+<h2><span id="he-xin-yuan-li-tu-jie">核心原理图解</span><a href="#he-xin-yuan-li-tu-jie" class="header-anchor">#</a></h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">你的电脑（写作） --&gt; Git推送 --&gt; GitHub仓库（存储+托管） --&gt; 访客通过 `yourname.github.io` 访问</span><br><span class="line">          ↑</span><br><span class="line">      Markdown文件</span><br><span class="line">         (本地)</span><br></pre></td></tr></table></figure>
+
+<h2><span id="di-yi-bu-fen-qian-qi-zhun-bei-zhi-xu-zuo-yi-ci">第一部分：前期准备（只需做一次）</span><a href="#di-yi-bu-fen-qian-qi-zhun-bei-zhi-xu-zuo-yi-ci" class="header-anchor">#</a></h2><h3><span id="di-1-bu-zhu-ce-github-zhang-hu">第1步：注册GitHub账户</span><a href="#di-1-bu-zhu-ce-github-zhang-hu" class="header-anchor">#</a></h3><ol>
+<li>访问 <a target="_blank" rel="noopener" href="https://github.com/">github.com</a>，点击 “Sign up”。</li>
+<li>按提示填写用户名、邮箱、密码。</li>
+<li>验证邮箱，完成注册。</li>
+</ol>
+<p><strong>关键</strong>：你的用户名将决定你的博客网址（例如，用户名为 <code>alice</code>，则博客地址为 <code>alice.github.io</code>）。</p>
+<h3><span id="di-2-bu-an-zhuang-bi-bei-ruan-jian">第2步：安装必备软件</span><a href="#di-2-bu-an-zhuang-bi-bei-ruan-jian" class="header-anchor">#</a></h3><p>在你的电脑上安装以下两个工具：</p>
+<p><strong>Git（版本管理工具）</strong></p>
+<ul>
+<li>下载：<a target="_blank" rel="noopener" href="https://git-scm.com/">git-scm.com</a></li>
+<li>安装：一路”Next”即可。安装后，在命令行输入 <code>git --version</code> 能显示版本号即成功。</li>
+</ul>
+<p><strong>Node.js（运行环境）</strong></p>
+<ul>
+<li>下载：<a target="_blank" rel="noopener" href="https://nodejs.org/">nodejs.org</a></li>
+<li>请下载 LTS（长期支持版）。</li>
+<li>安装：同样一路”Next”。安装后，在命令行输入 <code>node -v</code> 和 <code>npm -v</code> 能显示版本号即成功。</li>
+</ul>
+<h3><span id="di-3-bu-pei-zhi-git-shen-fen">第3步：配置Git身份</span><a href="#di-3-bu-pei-zhi-git-shen-fen" class="header-anchor">#</a></h3><p>打开命令行（Windows 用 Git Bash 或 CMD，Mac 用 Terminal），设置你的身份信息，这样提交代码时GitHub才知道是谁。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git config --global user.name <span class="string">&quot;你的GitHub用户名&quot;</span></span><br><span class="line">git config --global user.email <span class="string">&quot;你的GitHub注册邮箱&quot;</span></span><br></pre></td></tr></table></figure>
+
+<h2><span id="di-er-bu-fen-chuang-jian-github-pages-cang-ku-5-fen-zhong">第二部分：创建GitHub Pages仓库（5分钟）</span><a href="#di-er-bu-fen-chuang-jian-github-pages-cang-ku-5-fen-zhong" class="header-anchor">#</a></h2><ol>
+<li>登录 GitHub，点击右上角 <code>+</code> → <code>New repository</code>。</li>
+<li><strong>仓库名</strong> 必须严格按此格式填写：<code>你的用户名.github.io</code><ul>
+<li>例如：用户名为 <code>alice</code>，仓库名就必须是 <code>alice.github.io</code></li>
+<li><strong>这一点至关重要！</strong></li>
+</ul>
+</li>
+<li>描述选填，选择 <strong>Public（公开）</strong>，勾选 “Initialize this repository with a README”。</li>
+<li>点击 <code>Create repository</code>。</li>
+</ol>
+<p>至此，你的博客”云端空间”已创建完成。网址将是 <code>https://你的用户名.github.io</code>。</p>
+<h2><span id="di-san-bu-fen-ben-di-da-jian-hexo-bo-ke-15-fen-zhong">第三部分：本地搭建Hexo博客（15分钟）</span><a href="#di-san-bu-fen-ben-di-da-jian-hexo-bo-ke-15-fen-zhong" class="header-anchor">#</a></h2><h3><span id="di-1-bu-an-zhuang-hexo-ming-ling-xing-gong-ju">第1步：安装Hexo命令行工具</span><a href="#di-1-bu-an-zhuang-hexo-ming-ling-xing-gong-ju" class="header-anchor">#</a></h3><p>打开命令行，执行以下命令：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install -g hexo-cli</span><br></pre></td></tr></table></figure>
+
+<h3><span id="di-2-bu-chu-shi-hua-ni-de-bo-ke-wen-jian-jia">第2步：初始化你的博客文件夹</span><a href="#di-2-bu-chu-shi-hua-ni-de-bo-ke-wen-jian-jia" class="header-anchor">#</a></h3><p>选择一个你喜欢的目录（例如 <code>D:\Projects</code>），在命令行中进入该目录，然后执行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">hexo init my-blog  <span class="comment"># &quot;my-blog&quot;是你的本地博客文件夹名，可以自定义</span></span><br><span class="line"><span class="built_in">cd</span> my-blog          <span class="comment"># 进入这个文件夹</span></span><br><span class="line">npm install         <span class="comment"># 安装依赖包</span></span><br></pre></td></tr></table></figure>
+
+<h3><span id="di-3-bu-ben-di-yu-lan-bo-ke">第3步：本地预览博客</span><a href="#di-3-bu-ben-di-yu-lan-bo-ke" class="header-anchor">#</a></h3><p>执行以下命令，启动本地服务器：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">hexo server</span><br><span class="line"><span class="comment"># 或者简写: hexo s</span></span><br></pre></td></tr></table></figure>
+
+<p>打开浏览器，访问 <code>http://localhost:4000</code>，你应该能看到一个默认的Hexo博客页面。恭喜，本地博客搭建成功！</p>
+<p>按 <code>Ctrl + C</code> 可以停止本地服务器。</p>
+<h2><span id="di-si-bu-fen-guan-lian-ben-di-bo-ke-yu-github-cang-ku-bing-bu-shu-10-fen-zhong">第四部分：关联本地博客与GitHub仓库并部署（10分钟）</span><a href="#di-si-bu-fen-guan-lian-ben-di-bo-ke-yu-github-cang-ku-bing-bu-shu-10-fen-zhong" class="header-anchor">#</a></h2><h3><span id="di-1-bu-an-zhuang-bu-shu-cha-jian">第1步：安装部署插件</span><a href="#di-1-bu-an-zhuang-bu-shu-cha-jian" class="header-anchor">#</a></h3><p>在你的博客文件夹（<code>my-blog</code>）下，执行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install hexo-deployer-git --save</span><br></pre></td></tr></table></figure>
+
+<h3><span id="di-2-bu-xiu-gai-bo-ke-pei-zhi-wen-jian">第2步：修改博客配置文件</span><a href="#di-2-bu-xiu-gai-bo-ke-pei-zhi-wen-jian" class="header-anchor">#</a></h3><p>用任何文本编辑器（如 VS Code、Sublime、记事本）打开博客根目录下的 <code>_config.yml</code> 文件。</p>
+<p>找到 <code>deploy:</code> 部分（通常在文件末尾），修改为：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">deploy:</span></span><br><span class="line">  <span class="attr">type:</span> <span class="string">git</span></span><br><span class="line">  <span class="attr">repo:</span> <span class="string">https://github.com/你的用户名/你的用户名.github.io.git</span></span><br><span class="line">  <span class="attr">branch:</span> <span class="string">main</span></span><br></pre></td></tr></table></figure>
+
+<p>将 <code>你的用户名</code> 替换成你的GitHub用户名。</p>
+<p><strong>注意</strong>：<code>repo:</code> 和 <code>branch:</code> 后面的冒号 <code>:</code> 后必须有一个英文空格，这是YAML格式的要求。</p>
+<p>你可以顺便修改博客的基本信息（在文件顶部）：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">title:</span> <span class="string">你的博客名</span></span><br><span class="line"><span class="attr">subtitle:</span> <span class="string">你的副标题</span></span><br><span class="line"><span class="attr">description:</span> <span class="string">博客描述</span></span><br><span class="line"><span class="attr">author:</span> <span class="string">你的名字</span></span><br><span class="line"><span class="attr">language:</span> <span class="string">zh-CN</span></span><br></pre></td></tr></table></figure>
+
+<h3><span id="di-3-bu-sheng-cheng-jing-tai-wen-jian-bing-bu-shu-dao-github">第3步：生成静态文件并部署到GitHub</span><a href="#di-3-bu-sheng-cheng-jing-tai-wen-jian-bing-bu-shu-dao-github" class="header-anchor">#</a></h3><p>在博客根目录下，依次执行以下三条命令：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">hexo clean     <span class="comment"># 清理缓存和旧文件</span></span><br><span class="line">hexo generate  <span class="comment"># 生成静态网页文件（可简写为 hexo g）</span></span><br><span class="line">hexo deploy    <span class="comment"># 部署到GitHub（可简写为 hexo d）</span></span><br></pre></td></tr></table></figure>
+
+<p>第一次部署时，可能会弹窗要求你登录GitHub账户，按提示操作即可。</p>
+<h3><span id="di-4-bu-jian-zheng-qi-ji">第4步：见证奇迹</span><a href="#di-4-bu-jian-zheng-qi-ji" class="header-anchor">#</a></h3><p>等待1-2分钟，在浏览器中访问 <code>https://你的用户名.github.io</code>，你的个人技术博客已经在线了！</p>
+<h2><span id="di-wu-bu-fen-kai-shi-xie-zuo-he-xin">第五部分：开始写作（核心！）</span><a href="#di-wu-bu-fen-kai-shi-xie-zuo-he-xin" class="header-anchor">#</a></h2><h3><span id="ru-he-xie-yi-pian-xin-wen-zhang">如何写一篇新文章？</span><a href="#ru-he-xie-yi-pian-xin-wen-zhang" class="header-anchor">#</a></h3><p>在博客根目录下，执行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hexo new <span class="string">&quot;我的第一篇技术文章&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>这条命令会在 <code>source/_posts</code> 目录下生成一个Markdown文件：<code>我的第一篇技术文章.md</code>。</p>
+<p>用你喜欢的编辑器（强烈推荐 VS Code）打开这个 <code>.md</code> 文件。</p>
+<p><strong>文章的基本结构：</strong></p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">---</span><br><span class="line">title: 我的第一篇技术文章</span><br><span class="line">date: 2026-02-11 15:30:00</span><br><span class="line">tags: [JavaScript, 入门]</span><br><span class="line"><span class="section">categories: 编程</span></span><br><span class="line"><span class="section">---</span></span><br><span class="line">这里是文章的摘要，会显示在首页。</span><br><span class="line"></span><br><span class="line">&lt;!-- more --&gt;  &lt;!-- 这是摘要分割线，上面的内容是摘要 --&gt;</span><br><span class="line"></span><br><span class="line"><span class="section">## 这里是正文标题</span></span><br><span class="line"></span><br><span class="line">正文从这里开始，用 <span class="strong">**Markdown语法**</span> 书写，非常方便。</span><br><span class="line"></span><br><span class="line"><span class="section">### 插入代码块（这是最关键的功能！）</span></span><br><span class="line"></span><br><span class="line"><span class="code">```javascript</span></span><br><span class="line"><span class="code">// 你的代码</span></span><br><span class="line"><span class="code">function hello() &#123;</span></span><br><span class="line"><span class="code">    console.log(&#x27;Hello, GitHub Pages!&#x27;);</span></span><br><span class="line"><span class="code">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<h3><span id="cha-ru-tu-pian">插入图片</span><a href="#cha-ru-tu-pian" class="header-anchor">#</a></h3><p><img src="/%E5%9B%BE%E7%89%87%E9%93%BE%E6%8E%A5%E6%88%96%E8%B7%AF%E5%BE%84" alt="图片描述"></p>
+<p>继续写你的心得…</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">### 写完文章后如何发布？</span><br><span class="line"></span><br><span class="line">和部署时一样，执行&quot;三连&quot;命令：</span><br><span class="line"></span><br><span class="line">```bash</span><br><span class="line">hexo clean</span><br><span class="line">hexo g</span><br><span class="line">hexo d</span><br></pre></td></tr></table></figure>
+
+<p>等待1分钟，刷新你的博客主页，新文章就出现了！</p>
+<h2><span id="hou-xu-you-hua-yu-jian-yi">后续优化与建议</span><a href="#hou-xu-you-hua-yu-jian-yi" class="header-anchor">#</a></h2><ol>
+<li><p><strong>更换主题</strong>：默认主题较简单。在 <a target="_blank" rel="noopener" href="https://hexo.io/themes/">Hexo主题官网</a> 选一个喜欢的，按照主题文档安装（通常只需 <code>git clone</code> 主题到 <code>themes</code> 目录，然后修改 <code>_config.yml</code> 中的 <code>theme</code> 设置）。</p>
+</li>
+<li><p><strong>购买自定义域名（可选）</strong>：在域名商（如 Namesilo、阿里云）购买一个域名（如 <code>yourname.tech</code>），然后在博客 <code>source</code> 目录下新建 <code>CNAME</code> 文件（无后缀），里面写上你的域名，最后在域名管理后台设置DNS解析到 <code>你的用户名.github.io</code>。</p>
+</li>
+<li><p><strong>写作流程固化</strong>：</p>
+<ul>
+<li><strong>本地写作</strong>：用 VS Code 在 <code>source/_posts</code> 里写 <code>.md</code> 文件。</li>
+<li><strong>本地预览</strong>：随时用 <code>hexo s</code> 在 <code>localhost:4000</code> 预览效果。</li>
+<li><strong>一键部署</strong>：写完后 <code>hexo clean &amp;&amp; hexo g &amp;&amp; hexo d</code> 三条命令发布。</li>
+<li><strong>备份</strong>：你的整个 <code>my-blog</code> 文件夹就是你的博客源码，建议用Git管理或同步到网盘。</li>
+</ul>
+</li>
+</ol>
+<h2><span id="yu-dao-wen-ti-zen-me-ban">遇到问题怎么办？</span><a href="#yu-dao-wen-ti-zen-me-ban" class="header-anchor">#</a></h2><ol>
+<li>检查每一步的命令和配置是否有多余或少打空格。</li>
+<li>仔细阅读命令行中的错误信息，它们通常非常清晰。</li>
+<li>搜索引擎是你的朋友，搜索 “hexo 部署失败 xxxx错误” 基本都能找到答案。</li>
+</ol>
+<h2><span id="zui-hou">最后</span><a href="#zui-hou" class="header-anchor">#</a></h2><p>这套方案一旦搭好，你的创作体验会非常流畅：用你最熟悉的编辑器写Markdown，用Git命令一键发布，拥有一个干净、专业、完全属于自己且支持完美代码展示的技术博客。</p>
+<p>现在，就从 <code>hexo new &quot;Hello World&quot;</code> 开始你的第一篇记录吧！享受创造的乐趣。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2026/02/11/GitHub-Pages-%E9%9D%99%E6%80%81%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/" data-id="cuidPJ4ENVZfxHwA8c0Ec1a4B" data-title="GitHub Pages + 静态博客搭建指南" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/GitHub-Pages/" rel="tag">GitHub Pages</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Hexo/" rel="tag">Hexo</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA/" rel="tag">博客搭建</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%95%99%E7%A8%8B/" rel="tag">教程</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-MIME-类型到底是什么-一文讲清它的作用" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2026/02/11/MIME-%E7%B1%BB%E5%9E%8B%E5%88%B0%E5%BA%95%E6%98%AF%E4%BB%80%E4%B9%88-%E4%B8%80%E6%96%87%E8%AE%B2%E6%B8%85%E5%AE%83%E7%9A%84%E4%BD%9C%E7%94%A8/" class="article-date">
+  <time class="dt-published" datetime="2026-02-10T16:00:00.000Z" itemprop="datePublished">2026-02-11</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/">网络基础</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2026/02/11/MIME-%E7%B1%BB%E5%9E%8B%E5%88%B0%E5%BA%95%E6%98%AF%E4%BB%80%E4%B9%88-%E4%B8%80%E6%96%87%E8%AE%B2%E6%B8%85%E5%AE%83%E7%9A%84%E4%BD%9C%E7%94%A8/">MIME 类型到底是什么？一文讲清它的作用</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>这篇文章用通俗的方式解释 <strong>MIME 类型是什么、长什么样、在浏览器 &#x2F; 邮件 &#x2F; API 通信中分别起什么作用</strong>，以及它和安全之间的关系。看完之后，你应该能看懂常见的 <code>Content-Type</code> 头，也知道什么时候需要手动配置它。</p>
+<div class="toc">
+
+<!-- toc -->
+
+<ul>
+<li><a href="#jie-lun-xian-xing">结论先行</a></li>
+<li><a href="#bei-jing-yu-wen-ti">背景与问题</a></li>
+<li><a href="#shi-me-shi-mime-lei-xing">什么是 MIME 类型？</a></li>
+<li><a href="#mime-lei-xing-chang-shi-me-yang">MIME 类型长什么样？</a></li>
+<li><a href="#mime-lei-xing-de-he-xin-zuo-yong">MIME 类型的核心作用</a><ul>
+<li><a href="#1-zhi-dao-liu-lan-qi-ru-he-xuan-ran-nei-rong">1. 指导浏览器如何渲染内容</a></li>
+<li><a href="#2-bang-cao-zuo-xi-tong-zhao-dao-he-gua-de-ben-di-ying-yong">2. 帮操作系统找到合适的本地应用</a></li>
+<li><a href="#3-rang-dian-zi-you-jian-zhi-chi-ge-chong-fu-jian">3. 让电子邮件支持各种附件</a></li>
+<li><a href="#4-zai-api-tong-xin-zhong-xie-shang-shu-ju-ge-shi">4. 在 API 通信中协商数据格式</a></li>
+<li><a href="#5-zuo-wei-ji-chu-de-an-quan-fang-hu-shou-duan">5. 作为基础的安全防护手段</a></li>
+</ul>
+</li>
+<li><a href="#yi-ge-wan-zheng-de-http-shi-li">一个完整的 HTTP 示例</a></li>
+<li><a href="#xiao-jie">小结</a></li>
+</ul>
+<!-- tocstop -->
+
+</div>
+
+<h2><span id="jie-lun-xian-xing">结论先行</span><a href="#jie-lun-xian-xing" class="header-anchor">#</a></h2><ul>
+<li><strong>一句话结论</strong>：MIME 类型是一种“内容类型标签”，用来告诉接收方“这段数据到底是什么格式”，从而让浏览器、操作系统、邮件客户端、API 客户端 <strong>知道该怎么解析和展示它</strong>。</li>
+<li><strong>适用前提</strong>：<ul>
+<li>你在做 Web 开发（前端 &#x2F; 后端 &#x2F; 全栈），经常和 HTTP、API、文件上传下载打交道</li>
+<li>你想搞清楚为什么有时候浏览器会把文件直接打开，有时候却只下载，或者出现“格式不正确”的报错</li>
+<li>你希望正确设置 <code>Content-Type</code>，避免编码问题和安全隐患</li>
+</ul>
+</li>
+</ul>
+<h2><span id="bei-jing-yu-wen-ti">背景与问题</span><a href="#bei-jing-yu-wen-ti" class="header-anchor">#</a></h2><p>在真实开发中，经常会遇到类似情况：</p>
+<ul>
+<li>浏览器请求了一个接口，返回的是 JSON 数据，但因为 <code>Content-Type</code> 没设好，导致浏览器当成纯文本甚至下载文件</li>
+<li>上传文件接口明明限制了“只能上传图片”，但有人还是传上来脚本文件，造成安全风险</li>
+<li>邮件里带的附件收不到、打不开，或者被客户端当成“乱码”</li>
+<li>不同 API 客户端想要不同格式的数据（JSON &#x2F; XML &#x2F; HTML），但双方沟通混乱</li>
+</ul>
+<p>这些问题背后，有一个共同的关键点：<strong>数据是什么，接收方要靠“标签”来判断，而不是“猜”</strong>。<br>这个“标签”，就是 MIME 类型。</p>
+<h2><span id="shi-me-shi-mime-lei-xing">什么是 MIME 类型？</span><a href="#shi-me-shi-mime-lei-xing" class="header-anchor">#</a></h2><p><strong>MIME 类型</strong>，最初叫 <em>Multipurpose Internet Mail Extensions</em>（多用途互联网邮件扩展），后来在 HTTP 等协议里被广泛使用，现在更常被称为 <strong>媒体类型（Media Type）</strong> 或 <strong>内容类型（Content Type）</strong>。</p>
+<p>你可以把它类比成：</p>
+<ul>
+<li><strong>快递单上的“物品说明”</strong></li>
+<li>或者 <strong>文件的“身份证”</strong></li>
+</ul>
+<p>它本身不包含真正的内容，但会告诉接收方：</p>
+<ul>
+<li>“这是一段 HTML 文本”</li>
+<li>“这是一张 JPEG 图片”</li>
+<li>“这是一份 PDF 文档”</li>
+<li>“这是一段 JSON 数据”</li>
+</ul>
+<p>有了这个信息，浏览器 &#x2F; 邮件客户端 &#x2F; 操作系统 才能决定：</p>
+<ul>
+<li>用什么方式解析</li>
+<li>展示给用户还是直接下载</li>
+<li>是否调用某个插件或应用程序打开</li>
+</ul>
+<h2><span id="mime-lei-xing-chang-shi-me-yang">MIME 类型长什么样？</span><a href="#mime-lei-xing-chang-shi-me-yang" class="header-anchor">#</a></h2><p>MIME 类型的基本格式是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">类型/子类型</span><br></pre></td></tr></table></figure>
+
+<p>常见例子：</p>
+<ul>
+<li><code>text/html</code> → 文本类型中的 HTML 文档</li>
+<li><code>image/jpeg</code> → 图片类型中的 JPEG 格式</li>
+<li><code>application/pdf</code> → 应用程序数据中的 PDF 文档</li>
+<li><code>video/mp4</code> → 视频类型中的 MP4 格式</li>
+<li><code>application/json</code> → 应用程序数据中的 JSON 格式</li>
+</ul>
+<p>有时还会带参数，例如字符集信息：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">text/html; charset=UTF-8</span><br></pre></td></tr></table></figure>
+
+<p>这里的 <code>charset=UTF-8</code> 表示正文内容使用 UTF-8 编码，对中文页面非常关键。</p>
+<h2><span id="mime-lei-xing-de-he-xin-zuo-yong">MIME 类型的核心作用</span><a href="#mime-lei-xing-de-he-xin-zuo-yong" class="header-anchor">#</a></h2><h3><span id="1-zhi-dao-liu-lan-qi-ru-he-xuan-ran-nei-rong">1. 指导浏览器如何渲染内容</span><a href="#1-zhi-dao-liu-lan-qi-ru-he-xuan-ran-nei-rong" class="header-anchor">#</a></h3><p>在 HTTP 响应中，服务器会通过 <code>Content-Type</code> 头告诉浏览器“我给你的这坨数据是什么”。</p>
+<p>示例：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">HTTP/1.1 200 OK</span><br><span class="line">Content-Type: text/html; charset=UTF-8</span><br><span class="line">Content-Length: 1234</span><br><span class="line"></span><br><span class="line">&lt;!DOCTYPE html&gt;</span><br><span class="line">&lt;html&gt;</span><br><span class="line">...</span><br><span class="line">&lt;/html&gt;</span><br></pre></td></tr></table></figure>
+
+<p>浏览器看到 <code>Content-Type: text/html</code>，就知道：</p>
+<ul>
+<li>这是一段 HTML 文本</li>
+<li>需要按 HTML 规范解析，并渲染成网页</li>
+</ul>
+<p>如果是图片：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Content-Type: image/png</span><br></pre></td></tr></table></figure>
+
+<p>浏览器就会把它当成 PNG 图片展示，而不是当作一堆“乱码文字”。</p>
+<p>再比如：</p>
+<ul>
+<li><code>application/pdf</code> → 调用内置或外部 PDF 阅读器预览或下载</li>
+<li><code>application/json</code> → DevTools 中会按 JSON 高亮显示，前端代码也更容易按 JSON 解析</li>
+</ul>
+<p><strong>如果 MIME 类型设置错误</strong>，常见现象包括：</p>
+<ul>
+<li>HTML 被当成纯文本显示，页面源码直接露出来</li>
+<li>JSON 被下载成文件，而不是在浏览器中展示</li>
+<li>JS 或 CSS 被当作别的类型，导致前端功能失效</li>
+</ul>
+<h3><span id="2-bang-cao-zuo-xi-tong-zhao-dao-he-gua-de-ben-di-ying-yong">2. 帮操作系统找到合适的本地应用</span><a href="#2-bang-cao-zuo-xi-tong-zhao-dao-he-gua-de-ben-di-ying-yong" class="header-anchor">#</a></h3><p>在操作系统里，MIME 类型和文件扩展名通常是一一对应或近似对应的：</p>
+<ul>
+<li><code>.jpg</code> → <code>image/jpeg</code> → 用图片查看器打开</li>
+<li><code>.pdf</code> → <code>application/pdf</code> → 用 PDF 阅读器打开</li>
+<li><code>.mp4</code> → <code>video/mp4</code> → 用视频播放器打开</li>
+</ul>
+<p>当你双击一个文件时：</p>
+<ol>
+<li>系统先根据扩展名推断 MIME 类型</li>
+<li>再根据 MIME 类型查找 <strong>默认应用程序</strong></li>
+<li>于是文件就被用对应的软件打开了</li>
+</ol>
+<p>虽然用户平时看到的是“扩展名 + 默认程序”，但系统底层通常是靠 MIME 类型来管理这些映射规则的。</p>
+<h3><span id="3-rang-dian-zi-you-jian-zhi-chi-ge-chong-fu-jian">3. 让电子邮件支持各种附件</span><a href="#3-rang-dian-zi-you-jian-zhi-chi-ge-chong-fu-jian" class="header-anchor">#</a></h3><p>MIME 标准最早是为了解决：“电子邮件除了纯文本，还能不能发点别的？比如图片、音频、PDF？”</p>
+<p>于是：</p>
+<ul>
+<li>把二进制文件用一种安全的方式编码（如 Base64）</li>
+<li>用 MIME 类型说明 <strong>附件的真实类型</strong></li>
+<li>邮件客户端收到后，根据 MIME 类型选择合适的方式解码和展示</li>
+</ul>
+<p>例如邮件里会出现类似描述：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Content-Type: image/jpeg; name=&quot;photo.jpg&quot;</span><br><span class="line">Content-Transfer-Encoding: base64</span><br></pre></td></tr></table></figure>
+
+<p>有了这些信息，收件人的邮件客户端才能知道：</p>
+<ul>
+<li>这是张 JPEG 图片</li>
+<li>需要先 Base64 解码</li>
+<li>再以图片形式嵌入邮件或作为附件展示</li>
+</ul>
+<h3><span id="4-zai-api-tong-xin-zhong-xie-shang-shu-ju-ge-shi">4. 在 API 通信中协商数据格式</span><a href="#4-zai-api-tong-xin-zhong-xie-shang-shu-ju-ge-shi" class="header-anchor">#</a></h3><p>在前后端通过 HTTP API 通信时，MIME 类型也极其关键，主要体现在两个头：</p>
+<ul>
+<li><code>Content-Type</code>：<strong>我发送的数据是什么格式</strong></li>
+<li><code>Accept</code>：<strong>我希望你返回什么格式</strong></li>
+</ul>
+<p>典型例子（客户端发请求）：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">POST /api/users HTTP/1.1</span><br><span class="line">Content-Type: application/json</span><br><span class="line">Accept: application/json</span><br><span class="line"></span><br><span class="line">&#123;&quot;name&quot;: &quot;Alice&quot;, &quot;age&quot;: 18&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这里表示：</p>
+<ul>
+<li>请求体是 JSON（<code>Content-Type: application/json</code>）</li>
+<li>客户端希望响应体也是 JSON（<code>Accept: application/json</code>）</li>
+</ul>
+<p>后端收到后，就会：</p>
+<ul>
+<li>按 JSON 方式解析请求体</li>
+<li>通常也按 JSON 格式响应数据</li>
+</ul>
+<p>如果 <code>Content-Type</code> 声明和实际内容不一致，后端框架往往会直接报错或解析失败。</p>
+<h3><span id="5-zuo-wei-ji-chu-de-an-quan-fang-hu-shou-duan">5. 作为基础的安全防护手段</span><a href="#5-zuo-wei-ji-chu-de-an-quan-fang-hu-shou-duan" class="header-anchor">#</a></h3><p>MIME 类型本身不是安全方案，但可以作为 <strong>第一层过滤和限制</strong>，常见用法包括：</p>
+<ul>
+<li>上传接口只接受 <code>image/*</code> 类型，拒绝可执行类型（如某些 <code>application/x-executable</code>）</li>
+<li>静态资源服务器只根据白名单类型提供服务，比如只服务 <code>text/css</code>、<code>application/javascript</code>、<code>image/*</code> 等</li>
+<li>某些安全头（如 <code>X-Content-Type-Options: nosniff</code>）要求浏览器 <strong>不要乱猜 MIME 类型</strong>，而是严格按 <code>Content-Type</code> 行事，以减少某些脚本注入风险</li>
+</ul>
+<p>举个典型攻击场景：</p>
+<ul>
+<li>用户上传一个伪装成图片的脚本文件</li>
+<li>如果服务器错误地标记为 <code>text/html</code> 或 <code>application/javascript</code></li>
+<li>浏览器访问时可能会当作脚本执行，造成 XSS 等问题</li>
+</ul>
+<p>因此，<strong>正确设置和校验 MIME 类型</strong>，是 Web 安全的基础之一。</p>
+<h2><span id="yi-ge-wan-zheng-de-http-shi-li">一个完整的 HTTP 示例</span><a href="#yi-ge-wan-zheng-de-http-shi-li" class="header-anchor">#</a></h2><p>综合上面的内容，看一个相对完整的示例：浏览器请求一个 JSON API。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"># 浏览器或客户端请求</span><br><span class="line">GET /api/profile HTTP/1.1</span><br><span class="line">Host: api.example.com</span><br><span class="line">Accept: application/json</span><br><span class="line"></span><br><span class="line"># 服务器响应</span><br><span class="line">HTTP/1.1 200 OK</span><br><span class="line">Content-Type: application/json; charset=UTF-8</span><br><span class="line">Content-Length: 89</span><br><span class="line"></span><br><span class="line">&#123;&quot;id&quot;: 1, &quot;name&quot;: &quot;Alice&quot;, &quot;role&quot;: &quot;admin&quot;, &quot;email&quot;: &quot;alice@example.com&quot;&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这里：</p>
+<ul>
+<li><code>Accept: application/json</code>：客户端说“我希望你给我 JSON”</li>
+<li><code>Content-Type: application/json; charset=UTF-8</code>：服务器回应“好的，我给你的是 JSON，编码是 UTF-8”</li>
+<li>客户端就能放心地用 JSON 解析库来处理响应体</li>
+</ul>
+<p>如果这里写成了 <code>text/html</code> 或 <code>text/plain</code>，很多工具的行为就会变得微妙甚至出错。</p>
+<h2><span id="xiao-jie">小结</span><a href="#xiao-jie" class="header-anchor">#</a></h2><ul>
+<li><strong>MIME 类型 &#x3D; 数据的“内容类型标签”</strong>，是 HTTP &#x2F; 邮件等应用层协议里非常基础但极其重要的一环。</li>
+<li>它决定了浏览器、操作系统、邮件客户端和 API 客户端 <strong>应该如何解析、展示和处理这段数据</strong>。</li>
+<li>在 Web 开发中，合理设置 <code>Content-Type</code>、<code>Accept</code>，以及对上传文件的 MIME 类型进行校验，是保证功能正确和提升安全性的关键步骤。</li>
+<li>下次你再看到 <code>Content-Type: application/json</code> 或 <code>text/html; charset=UTF-8</code> 这类字段时，可以把它当成是“我接下来要给你什么”的清晰自我介绍。</li>
+</ul>
+<p>希望这篇整理能帮你在实际开发中更自信地处理 <code>Content-Type</code>、文件上传和 API 数据格式，也少踩一些“明明是 JSON 却被当成别的东西”的坑。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2026/02/11/MIME-%E7%B1%BB%E5%9E%8B%E5%88%B0%E5%BA%95%E6%98%AF%E4%BB%80%E4%B9%88-%E4%B8%80%E6%96%87%E8%AE%B2%E6%B8%85%E5%AE%83%E7%9A%84%E4%BD%9C%E7%94%A8/" data-id="cuidrVMyaeKr2DA8iV9wprJBO" data-title="MIME 类型到底是什么？一文讲清它的作用" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/HTTP/" rel="tag">HTTP</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/MIME/" rel="tag">MIME</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Web%E5%BC%80%E5%8F%91/" rel="tag">Web开发</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%86%85%E5%AE%B9%E7%B1%BB%E5%9E%8B/" rel="tag">内容类型</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-URI和URL的区别到底是什么" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2026/02/11/URI%E5%92%8CURL%E7%9A%84%E5%8C%BA%E5%88%AB%E5%88%B0%E5%BA%95%E6%98%AF%E4%BB%80%E4%B9%88/" class="article-date">
+  <time class="dt-published" datetime="2026-02-10T16:00:00.000Z" itemprop="datePublished">2026-02-11</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/">网络基础</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2026/02/11/URI%E5%92%8CURL%E7%9A%84%E5%8C%BA%E5%88%AB%E5%88%B0%E5%BA%95%E6%98%AF%E4%BB%80%E4%B9%88/">URI 和 URL 的区别到底是什么？</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>很多文章都在讲 URI 和 URL 的区别，但看完之后依然容易混：有的说“URL 是 URI 的子集”，有的说“日常只要记 URL 就行”。这篇文章尝试用<strong>更贴近日常开发场景</strong>的方式，把两者的关系讲清楚：<strong>什么时候它们几乎可以当成一回事，什么时候你又必须区分？</strong></p>
+<div class="toc">
+
+<!-- toc -->
+
+<ul>
+<li><a href="#jie-lun-xian-xing">结论先行</a></li>
+<li><a href="#bei-jing-yu-wen-ti">背景与问题</a></li>
+<li><a href="#he-xin-dui-bi-uri-vs-url">核心对比：URI vs URL</a><ul>
+<li><a href="#1-gai-nian-fan-wei-shui-da-shui-xiao">1. 概念范围：谁大谁小？</a></li>
+<li><a href="#2-jie-gou-shang-de-chai-yi">2. 结构上的差异</a></li>
+<li><a href="#3-he-xin-guan-xi-zai-zong-jie">3. 核心关系再总结</a></li>
+</ul>
+</li>
+<li><a href="#shi-me-shi-hou-xu-yao-yan-jin-qu-fen-shi-me-shi-hou-ke-yi-fang-kuan">什么时候需要严谨区分，什么时候可以放宽？</a><ul>
+<li><a href="#1-ri-chang-kai-fa-wang-ye-di-zhi-chang-jing">1. 日常开发 &#x2F; 网页地址场景</a></li>
+<li><a href="#2-yue-du-gui-fan-biao-zhun-wen-dang-shi">2. 阅读规范 &#x2F; 标准文档时</a></li>
+<li><a href="#3-she-ji-jie-kou-ku-de-chou-xiang-ceng-ji-shi">3. 设计接口、库的抽象层级时</a></li>
+</ul>
+</li>
+<li><a href="#ke-luo-di-de-gui-ze-huo-qing-dan">可落地的规则（或清单）</a></li>
+</ul>
+<!-- tocstop -->
+
+</div>
+
+<h2><span id="jie-lun-xian-xing">结论先行</span><a href="#jie-lun-xian-xing" class="header-anchor">#</a></h2><ul>
+<li><strong>一句话结论</strong>：URI 是“统一资源标识符”的统称，强调“标识某个资源”；URL 是 URI 的一个子集，强调“通过具体路径和协议去定位并访问这个资源”。<strong>所有 URL 都是 URI，但不是所有 URI 都是 URL。</strong></li>
+<li><strong>适用前提</strong>：<ul>
+<li>你在做 Web &#x2F; 后端 &#x2F; 网络相关开发，经常接触 <code>http://...</code>、<code>https://...</code> 这类地址</li>
+<li>偶尔会在标准、框架文档里看到“URI”这个词，但不知道和 URL 有什么区别</li>
+<li>希望在面试或写文档时，能用更准确的术语描述这些“地址”</li>
+</ul>
+</li>
+</ul>
+<h2><span id="bei-jing-yu-wen-ti">背景与问题</span><a href="#bei-jing-yu-wen-ti" class="header-anchor">#</a></h2><p>在日常开发中，我们习惯把 <code>https://www.example.com/page</code> 叫做“URL（网址）”。<br>但一翻 RFC 或框架文档，常常会看到类似表述：</p>
+<ul>
+<li>“传入一个 URI”</li>
+<li>“解析请求的 Request URI”</li>
+<li>“这是一个合法的 URI，但不是 URL”</li>
+</ul>
+<p>于是问题就来了：</p>
+<ul>
+<li>为什么标准里总提 URI，而很多教程又只讲 URL？</li>
+<li><code>mailto:test@example.com</code> 算 URL 吗？</li>
+<li><code>urn:isbn:0451450523</code> 这种没有协议和域名的字符串，又属于什么？</li>
+</ul>
+<p>要把这些问题弄清楚，需要先从定义出发，再回到使用场景。</p>
+<h2><span id="he-xin-dui-bi-uri-vs-url">核心对比：URI vs URL</span><a href="#he-xin-dui-bi-uri-vs-url" class="header-anchor">#</a></h2><h3><span id="1-gai-nian-fan-wei-shui-da-shui-xiao">1. 概念范围：谁大谁小？</span><a href="#1-gai-nian-fan-wei-shui-da-shui-xiao" class="header-anchor">#</a></h3><ul>
+<li><p><strong>URI（Uniform Resource Identifier，统一资源标识符）</strong></p>
+<ul>
+<li>是一个<strong>总称</strong>，只要是“能标识某个资源”的字符串，都可以叫 URI。</li>
+<li>它关心的是“<strong>是哪一个东西</strong>”，不一定关心“怎么去拿到它”。</li>
+<li>URI 下面包含两种典型子类型：<ul>
+<li><strong>URL（Locator，定位符）</strong></li>
+<li><strong>URN（Name，名称）</strong></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><strong>URL（Uniform Resource Locator，统一资源定位符）</strong></p>
+<ul>
+<li>是一种<strong>特殊的 URI</strong>，在标识资源的同时，还告诉你<strong>如何定位这个资源</strong>。</li>
+<li>通常会包含协议（scheme）、主机名、端口、路径等信息。</li>
+</ul>
+</li>
+</ul>
+<p><strong>关系可以简单记成：</strong></p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">URI = URL + URN (+ 其他可能的形式)</span><br></pre></td></tr></table></figure>
+
+<h3><span id="2-jie-gou-shang-de-chai-yi">2. 结构上的差异</span><a href="#2-jie-gou-shang-de-chai-yi" class="header-anchor">#</a></h3><ul>
+<li><p><strong>典型 URI（不一定是 URL）示例</strong>：</p>
+<ul>
+<li><p><code>urn:isbn:0451450523</code></p>
+<ul>
+<li>只标识某一本书的 ISBN 号</li>
+<li>并没有告诉你“在哪个网站上能下载到它”</li>
+</ul>
+</li>
+<li><p><code>mailto:test@example.com</code></p>
+<ul>
+<li>标识一个电子邮件地址</li>
+<li>可以被看作一种 URI，因为它标识了一个“收件人”</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><strong>典型 URL 示例</strong>：</p>
+<ul>
+<li><code>https://www.example.com/index.html</code></li>
+<li><code>ftp://example.com/file.zip</code></li>
+</ul>
+<p>它们都有：</p>
+<ul>
+<li>协议（<code>https</code>、<code>ftp</code>）</li>
+<li>主机名（<code>www.example.com</code>、<code>example.com</code>）</li>
+<li>路径（<code>/index.html</code>、<code>/file.zip</code>）</li>
+</ul>
+<p>这些信息合在一起，告诉你“<strong>去哪儿、用什么协议、以什么方式把资源拿回来</strong>”。</p>
+</li>
+</ul>
+<h3><span id="3-he-xin-guan-xi-zai-zong-jie">3. 核心关系再总结</span><a href="#3-he-xin-guan-xi-zai-zong-jie" class="header-anchor">#</a></h3><ul>
+<li><strong>所有 URL 都是 URI</strong>：因为 URL 也在“标识一个资源”，只不过还额外提供了定位方式。</li>
+<li><strong>不是所有 URI 都是 URL</strong>：像 <code>urn:isbn:...</code> 这种只有“名字”、没有“位置”的标识符，就是 URI 而不是 URL。</li>
+</ul>
+<p>用一句口语化的比喻来记：</p>
+<ul>
+<li><strong>URI 像“能唯一找到某个东西的任何标识”</strong></li>
+<li><strong>URL 像“附带了详细导航信息的那一类标识”</strong></li>
+</ul>
+<h2><span id="shi-me-shi-hou-xu-yao-yan-jin-qu-fen-shi-me-shi-hou-ke-yi-fang-kuan">什么时候需要严谨区分，什么时候可以放宽？</span><a href="#shi-me-shi-hou-xu-yao-yan-jin-qu-fen-shi-me-shi-hou-ke-yi-fang-kuan" class="header-anchor">#</a></h2><h3><span id="1-ri-chang-kai-fa-x2f-wang-ye-di-zhi-chang-jing">1. 日常开发 &#x2F; 网页地址场景</span><a href="#1-ri-chang-kai-fa-x2f-wang-ye-di-zhi-chang-jing" class="header-anchor">#</a></h3><p>在大部分 Web 开发、前端路由、接口地址的语境下，你看到的东西几乎都是 URL，例如：</p>
+<ul>
+<li>页面地址：<code>https://yourdomain.com/posts/1</code></li>
+<li>API 接口：<code>https://api.example.com/v1/users</code></li>
+<li>静态资源：<code>https://static.example.com/logo.png</code></li>
+</ul>
+<p>这些既是 URL，也是 URI。<br><strong>在这种上下文里，即使用 URI&#x2F;URL 混着说，通常也不会造成理解偏差。</strong></p>
+<p>很多框架 API 名字也会混用，比如：</p>
+<ul>
+<li>某些语言里叫 <code>parse_url</code></li>
+<li>某些 HTTP 库里参数名叫 <code>uri</code></li>
+</ul>
+<p>本质上都在处理一个“资源地址字符串”。</p>
+<h3><span id="2-yue-du-gui-fan-x2f-biao-zhun-wen-dang-shi">2. 阅读规范 &#x2F; 标准文档时</span><a href="#2-yue-du-gui-fan-x2f-biao-zhun-wen-dang-shi" class="header-anchor">#</a></h3><p>当你在看 RFC、协议规范、正式标准（如 HTTP 规范）时，就需要稍微严谨一点：</p>
+<ul>
+<li>文档中提到 <strong>URI</strong> 时，强调的是“任意合法的资源标识符字符串”</li>
+<li>文档中如果特意写 <strong>URL</strong>，往往在强调“可以用来定位资源的那一类”</li>
+</ul>
+<p>在这类技术文档里，作者通常是按严格定义在用术语的：</p>
+<ul>
+<li>Request Line 里的 <code>Request-URI</code></li>
+<li>重定向头里的“绝对 URI”</li>
+</ul>
+<p>这时候，把“URI 当成等同 URL”就容易产生歧义。</p>
+<h3><span id="3-she-ji-jie-kou-ku-de-chou-xiang-ceng-ji-shi">3. 设计接口、库的抽象层级时</span><a href="#3-she-ji-jie-kou-ku-de-chou-xiang-ceng-ji-shi" class="header-anchor">#</a></h3><p>如果你在写的是<strong>通用网络库、框架、网关</strong>，而不是单纯写业务代码，这个区别会更重要一些：</p>
+<ul>
+<li>对外暴露的接口参数叫 <code>uri</code>，一般表示“接受更泛化的标识符”</li>
+<li>如果你明确只接受“带协议和主机的完整地址”，就可以叫 <code>url</code></li>
+</ul>
+<p>例如：</p>
+<ul>
+<li>HTTP 客户端：<code>get(url: string)</code> → 你就应当传入一个可以直接访问的 URL</li>
+<li>通用解析器：<code>parseUri(input: string)</code> → 可以同时解析 URL、URN 等多种形式</li>
+</ul>
+<h2><span id="ke-luo-di-de-gui-ze-huo-qing-dan">可落地的规则（或清单）</span><a href="#ke-luo-di-de-gui-ze-huo-qing-dan" class="header-anchor">#</a></h2><ul>
+<li><p><strong>规则 1：记住这一句关系公式</strong></p>
+<ul>
+<li><strong>所有 URL 都是 URI，但并非所有 URI 都是 URL。</strong></li>
+<li>面试被问到时，先把这句话说清楚，再给一个 URN 例子即可。</li>
+</ul>
+</li>
+<li><p><strong>规则 2：日常写业务代码可以偏向用“URL”这个词</strong></p>
+<ul>
+<li>只要场景明显是“网页地址 &#x2F; 接口地址”，说 URL 就够用。</li>
+<li>不必为了显得“更专业”而强行把所有地方都改成 URI。</li>
+</ul>
+</li>
+<li><p><strong>规则 3：写库 &#x2F; 框架或读标准时要更严谨</strong></p>
+<ul>
+<li>API 参数名如果叫 <code>uri</code>，就不要只支持 URL 一种形式。</li>
+<li>阅读规范时，如果出现 URI&#x2F;URL&#x2F;URN 三者并列，要意识到它们是真的在区分概念。</li>
+</ul>
+</li>
+<li><p><strong>规则 4：遇到陌生字符串时先问自己两件事</strong></p>
+<ul>
+<li>它<strong>只是标识</strong>资源，还是也提供了<strong>访问路径和协议</strong>？</li>
+<li>如果有后者，那它就是 URL，同时也是 URI。</li>
+</ul>
+</li>
+</ul>
+<p>如果你把这点区别理顺了，以后再看到“URI&#x2F;URL&#x2F;URN”这样的术语组合，既能在日常开发中轻松使用，也能在需要严谨表述的时候，说得清、讲得明。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2026/02/11/URI%E5%92%8CURL%E7%9A%84%E5%8C%BA%E5%88%AB%E5%88%B0%E5%BA%95%E6%98%AF%E4%BB%80%E4%B9%88/" data-id="cuidePAPAzM3fuYOtKLhif3SD" data-title="URI 和 URL 的区别到底是什么？" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/HTTP/" rel="tag">HTTP</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/URI/" rel="tag">URI</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/URL/" rel="tag">URL</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/" rel="tag">网络基础</a></li></ul>
 
     </footer>
   </div>
@@ -426,7 +1198,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">分类</h3>
     <div class="widget">
-      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%95%99%E7%A8%8B/">教程</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%BC%96%E7%A8%8B%E5%AE%9E%E8%B7%B5/">编程实践</a></li></ul>
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%95%99%E7%A8%8B/">教程</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%BC%96%E7%A8%8B%E5%AE%9E%E8%B7%B5/">编程实践</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/">网络基础</a></li></ul>
     </div>
   </div>
 
@@ -436,7 +1208,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">标签</h3>
     <div class="widget">
-      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/DRY/" rel="tag">DRY</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/GitHub-Pages/" rel="tag">GitHub Pages</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Hexo/" rel="tag">Hexo</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/KISS/" rel="tag">KISS</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BB%A3%E7%A0%81%E8%AE%BE%E8%AE%A1/" rel="tag">代码设计</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA/" rel="tag">博客搭建</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%95%99%E7%A8%8B/" rel="tag">教程</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BC%96%E7%A0%81%E5%8E%9F%E5%88%99/" rel="tag">编码原则</a></li></ul>
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/ASP-NET-Core/" rel="tag">ASP.NET Core</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/DRY/" rel="tag">DRY</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/FromBody/" rel="tag">FromBody</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/FromForm/" rel="tag">FromForm</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/GitHub-Pages/" rel="tag">GitHub Pages</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/HTTP/" rel="tag">HTTP</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Hexo/" rel="tag">Hexo</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/KISS/" rel="tag">KISS</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MIME/" rel="tag">MIME</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/URI/" rel="tag">URI</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/URL/" rel="tag">URL</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Web-API/" rel="tag">Web API</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Web%E5%BC%80%E5%8F%91/" rel="tag">Web开发</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BB%A3%E7%A0%81%E8%AE%BE%E8%AE%A1/" rel="tag">代码设计</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%86%85%E5%AE%B9%E7%B1%BB%E5%9E%8B/" rel="tag">内容类型</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA/" rel="tag">博客搭建</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%95%99%E7%A8%8B/" rel="tag">教程</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0/" rel="tag">文件上传</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BC%96%E7%A0%81%E5%8E%9F%E5%88%99/" rel="tag">编码原则</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/" rel="tag">网络基础</a></li></ul>
     </div>
   </div>
 
@@ -446,7 +1218,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">标签云</h3>
     <div class="widget tagcloud">
-      <a href="/tags/DRY/" style="font-size: 10px;">DRY</a> <a href="/tags/GitHub-Pages/" style="font-size: 10px;">GitHub Pages</a> <a href="/tags/Hexo/" style="font-size: 10px;">Hexo</a> <a href="/tags/KISS/" style="font-size: 10px;">KISS</a> <a href="/tags/%E4%BB%A3%E7%A0%81%E8%AE%BE%E8%AE%A1/" style="font-size: 10px;">代码设计</a> <a href="/tags/%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA/" style="font-size: 10px;">博客搭建</a> <a href="/tags/%E6%95%99%E7%A8%8B/" style="font-size: 10px;">教程</a> <a href="/tags/%E7%BC%96%E7%A0%81%E5%8E%9F%E5%88%99/" style="font-size: 10px;">编码原则</a>
+      <a href="/tags/ASP-NET-Core/" style="font-size: 10px;">ASP.NET Core</a> <a href="/tags/DRY/" style="font-size: 10px;">DRY</a> <a href="/tags/FromBody/" style="font-size: 10px;">FromBody</a> <a href="/tags/FromForm/" style="font-size: 10px;">FromForm</a> <a href="/tags/GitHub-Pages/" style="font-size: 10px;">GitHub Pages</a> <a href="/tags/HTTP/" style="font-size: 20px;">HTTP</a> <a href="/tags/Hexo/" style="font-size: 10px;">Hexo</a> <a href="/tags/KISS/" style="font-size: 10px;">KISS</a> <a href="/tags/MIME/" style="font-size: 10px;">MIME</a> <a href="/tags/URI/" style="font-size: 10px;">URI</a> <a href="/tags/URL/" style="font-size: 10px;">URL</a> <a href="/tags/Web-API/" style="font-size: 10px;">Web API</a> <a href="/tags/Web%E5%BC%80%E5%8F%91/" style="font-size: 10px;">Web开发</a> <a href="/tags/%E4%BB%A3%E7%A0%81%E8%AE%BE%E8%AE%A1/" style="font-size: 10px;">代码设计</a> <a href="/tags/%E5%86%85%E5%AE%B9%E7%B1%BB%E5%9E%8B/" style="font-size: 10px;">内容类型</a> <a href="/tags/%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA/" style="font-size: 10px;">博客搭建</a> <a href="/tags/%E6%95%99%E7%A8%8B/" style="font-size: 10px;">教程</a> <a href="/tags/%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0/" style="font-size: 10px;">文件上传</a> <a href="/tags/%E7%BC%96%E7%A0%81%E5%8E%9F%E5%88%99/" style="font-size: 10px;">编码原则</a> <a href="/tags/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/" style="font-size: 10px;">网络基础</a>
     </div>
   </div>
 
@@ -468,11 +1240,23 @@
       <ul>
         
           <li>
-            <a href="/2026/02/11/GitHub-Pages-%E9%9D%99%E6%80%81%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/">GitHub Pages + 静态博客搭建指南</a>
+            <a href="/2026/02/11/ASP.NET-Core-FromForm-%E4%B8%8E-FromBody-%E5%8C%BA%E5%88%AB%E5%92%8C%E5%B8%B8%E8%A7%81%E5%9D%91/">ASP.NET Core 中 FromForm 与 FromBody 的区别和常见坑</a>
           </li>
         
           <li>
             <a href="/2026/02/11/KISS-%E4%B8%8E-DRY-%E5%9C%A8%E4%BB%A3%E7%A0%81%E4%B8%AD%E7%9A%84%E5%8F%96%E8%88%8D/">KISS 原则有时比 DRY 更重要</a>
+          </li>
+        
+          <li>
+            <a href="/2026/02/11/GitHub-Pages-%E9%9D%99%E6%80%81%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/">GitHub Pages + 静态博客搭建指南</a>
+          </li>
+        
+          <li>
+            <a href="/2026/02/11/MIME-%E7%B1%BB%E5%9E%8B%E5%88%B0%E5%BA%95%E6%98%AF%E4%BB%80%E4%B9%88-%E4%B8%80%E6%96%87%E8%AE%B2%E6%B8%85%E5%AE%83%E7%9A%84%E4%BD%9C%E7%94%A8/">MIME 类型到底是什么？一文讲清它的作用</a>
+          </li>
+        
+          <li>
+            <a href="/2026/02/11/URI%E5%92%8CURL%E7%9A%84%E5%8C%BA%E5%88%AB%E5%88%B0%E5%BA%95%E6%98%AF%E4%BB%80%E4%B9%88/">URI 和 URL 的区别到底是什么？</a>
           </li>
         
       </ul>

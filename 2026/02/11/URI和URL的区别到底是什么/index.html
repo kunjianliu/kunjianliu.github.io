@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>URI 和 URL 的区别到底是什么？ | simple focus</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="很多文章都在讲 URI 和 URL 的区别，但看完之后依然容易混：有的说“URL 是 URI 的子集”，有的说“日常只要记 URL 就行”。这篇文章尝试用更贴近日常开发场景的方式，把两者的关系讲清楚：什么时候它们几乎可以当成一回事，什么时候你又必须区分？      结论先行 背景与问题 核心对比：URI vs URL 1. 概念范围：谁大谁小？ 2. 结构上的差异 3. 核心关系再总结   什么时">
+<meta property="og:type" content="article">
+<meta property="og:title" content="URI 和 URL 的区别到底是什么？">
+<meta property="og:url" content="http://example.com/2026/02/11/URI%E5%92%8CURL%E7%9A%84%E5%8C%BA%E5%88%AB%E5%88%B0%E5%BA%95%E6%98%AF%E4%BB%80%E4%B9%88/index.html">
+<meta property="og:site_name" content="simple focus">
+<meta property="og:description" content="很多文章都在讲 URI 和 URL 的区别，但看完之后依然容易混：有的说“URL 是 URI 的子集”，有的说“日常只要记 URL 就行”。这篇文章尝试用更贴近日常开发场景的方式，把两者的关系讲清楚：什么时候它们几乎可以当成一回事，什么时候你又必须区分？      结论先行 背景与问题 核心对比：URI vs URL 1. 概念范围：谁大谁小？ 2. 结构上的差异 3. 核心关系再总结   什么时">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-02-10T16:00:00.000Z">
+<meta property="article:modified_time" content="2026-02-11T14:30:46.398Z">
+<meta property="article:author" content="kunjianliu">
+<meta property="article:tag" content="HTTP">
+<meta property="article:tag" content="URI">
+<meta property="article:tag" content="URL">
+<meta property="article:tag" content="网络基础">
+<meta name="twitter:card" content="summary">
+  
+    <link rel="alternate" href="/atom.xml" title="simple focus" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+  
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fork-awesome@1.2.0/css/fork-awesome.min.css">
+
+<meta name="generator" content="Hexo 8.1.1"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">simple focus</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"><span class="fa fa-bars"></span></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+        
+          <a class="nav-icon" href="/atom.xml" title="RSS 订阅"><span class="fa fa-rss"></span></a>
+        
+        <a class="nav-icon nav-search-btn" title="搜索"><span class="fa fa-search"></span></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="搜索"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://example.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-URI和URL的区别到底是什么" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2026/02/11/URI%E5%92%8CURL%E7%9A%84%E5%8C%BA%E5%88%AB%E5%88%B0%E5%BA%95%E6%98%AF%E4%BB%80%E4%B9%88/" class="article-date">
+  <time class="dt-published" datetime="2026-02-10T16:00:00.000Z" itemprop="datePublished">2026-02-11</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/">网络基础</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      URI 和 URL 的区别到底是什么？
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>很多文章都在讲 URI 和 URL 的区别，但看完之后依然容易混：有的说“URL 是 URI 的子集”，有的说“日常只要记 URL 就行”。这篇文章尝试用<strong>更贴近日常开发场景</strong>的方式，把两者的关系讲清楚：<strong>什么时候它们几乎可以当成一回事，什么时候你又必须区分？</strong></p>
+<div class="toc">
+
+<!-- toc -->
+
+<ul>
+<li><a href="#jie-lun-xian-xing">结论先行</a></li>
+<li><a href="#bei-jing-yu-wen-ti">背景与问题</a></li>
+<li><a href="#he-xin-dui-bi-uri-vs-url">核心对比：URI vs URL</a><ul>
+<li><a href="#1-gai-nian-fan-wei-shui-da-shui-xiao">1. 概念范围：谁大谁小？</a></li>
+<li><a href="#2-jie-gou-shang-de-chai-yi">2. 结构上的差异</a></li>
+<li><a href="#3-he-xin-guan-xi-zai-zong-jie">3. 核心关系再总结</a></li>
+</ul>
+</li>
+<li><a href="#shi-me-shi-hou-xu-yao-yan-jin-qu-fen-shi-me-shi-hou-ke-yi-fang-kuan">什么时候需要严谨区分，什么时候可以放宽？</a><ul>
+<li><a href="#1-ri-chang-kai-fa-wang-ye-di-zhi-chang-jing">1. 日常开发 &#x2F; 网页地址场景</a></li>
+<li><a href="#2-yue-du-gui-fan-biao-zhun-wen-dang-shi">2. 阅读规范 &#x2F; 标准文档时</a></li>
+<li><a href="#3-she-ji-jie-kou-ku-de-chou-xiang-ceng-ji-shi">3. 设计接口、库的抽象层级时</a></li>
+</ul>
+</li>
+<li><a href="#ke-luo-di-de-gui-ze-huo-qing-dan">可落地的规则（或清单）</a></li>
+</ul>
+<!-- tocstop -->
+
+</div>
+
+<h2><span id="jie-lun-xian-xing">结论先行</span><a href="#jie-lun-xian-xing" class="header-anchor">#</a></h2><ul>
+<li><strong>一句话结论</strong>：URI 是“统一资源标识符”的统称，强调“标识某个资源”；URL 是 URI 的一个子集，强调“通过具体路径和协议去定位并访问这个资源”。<strong>所有 URL 都是 URI，但不是所有 URI 都是 URL。</strong></li>
+<li><strong>适用前提</strong>：<ul>
+<li>你在做 Web &#x2F; 后端 &#x2F; 网络相关开发，经常接触 <code>http://...</code>、<code>https://...</code> 这类地址</li>
+<li>偶尔会在标准、框架文档里看到“URI”这个词，但不知道和 URL 有什么区别</li>
+<li>希望在面试或写文档时，能用更准确的术语描述这些“地址”</li>
+</ul>
+</li>
+</ul>
+<h2><span id="bei-jing-yu-wen-ti">背景与问题</span><a href="#bei-jing-yu-wen-ti" class="header-anchor">#</a></h2><p>在日常开发中，我们习惯把 <code>https://www.example.com/page</code> 叫做“URL（网址）”。<br>但一翻 RFC 或框架文档，常常会看到类似表述：</p>
+<ul>
+<li>“传入一个 URI”</li>
+<li>“解析请求的 Request URI”</li>
+<li>“这是一个合法的 URI，但不是 URL”</li>
+</ul>
+<p>于是问题就来了：</p>
+<ul>
+<li>为什么标准里总提 URI，而很多教程又只讲 URL？</li>
+<li><code>mailto:test@example.com</code> 算 URL 吗？</li>
+<li><code>urn:isbn:0451450523</code> 这种没有协议和域名的字符串，又属于什么？</li>
+</ul>
+<p>要把这些问题弄清楚，需要先从定义出发，再回到使用场景。</p>
+<h2><span id="he-xin-dui-bi-uri-vs-url">核心对比：URI vs URL</span><a href="#he-xin-dui-bi-uri-vs-url" class="header-anchor">#</a></h2><h3><span id="1-gai-nian-fan-wei-shui-da-shui-xiao">1. 概念范围：谁大谁小？</span><a href="#1-gai-nian-fan-wei-shui-da-shui-xiao" class="header-anchor">#</a></h3><ul>
+<li><p><strong>URI（Uniform Resource Identifier，统一资源标识符）</strong></p>
+<ul>
+<li>是一个<strong>总称</strong>，只要是“能标识某个资源”的字符串，都可以叫 URI。</li>
+<li>它关心的是“<strong>是哪一个东西</strong>”，不一定关心“怎么去拿到它”。</li>
+<li>URI 下面包含两种典型子类型：<ul>
+<li><strong>URL（Locator，定位符）</strong></li>
+<li><strong>URN（Name，名称）</strong></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><strong>URL（Uniform Resource Locator，统一资源定位符）</strong></p>
+<ul>
+<li>是一种<strong>特殊的 URI</strong>，在标识资源的同时，还告诉你<strong>如何定位这个资源</strong>。</li>
+<li>通常会包含协议（scheme）、主机名、端口、路径等信息。</li>
+</ul>
+</li>
+</ul>
+<p><strong>关系可以简单记成：</strong></p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">URI = URL + URN (+ 其他可能的形式)</span><br></pre></td></tr></table></figure>
+
+<h3><span id="2-jie-gou-shang-de-chai-yi">2. 结构上的差异</span><a href="#2-jie-gou-shang-de-chai-yi" class="header-anchor">#</a></h3><ul>
+<li><p><strong>典型 URI（不一定是 URL）示例</strong>：</p>
+<ul>
+<li><p><code>urn:isbn:0451450523</code></p>
+<ul>
+<li>只标识某一本书的 ISBN 号</li>
+<li>并没有告诉你“在哪个网站上能下载到它”</li>
+</ul>
+</li>
+<li><p><code>mailto:test@example.com</code></p>
+<ul>
+<li>标识一个电子邮件地址</li>
+<li>可以被看作一种 URI，因为它标识了一个“收件人”</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><strong>典型 URL 示例</strong>：</p>
+<ul>
+<li><code>https://www.example.com/index.html</code></li>
+<li><code>ftp://example.com/file.zip</code></li>
+</ul>
+<p>它们都有：</p>
+<ul>
+<li>协议（<code>https</code>、<code>ftp</code>）</li>
+<li>主机名（<code>www.example.com</code>、<code>example.com</code>）</li>
+<li>路径（<code>/index.html</code>、<code>/file.zip</code>）</li>
+</ul>
+<p>这些信息合在一起，告诉你“<strong>去哪儿、用什么协议、以什么方式把资源拿回来</strong>”。</p>
+</li>
+</ul>
+<h3><span id="3-he-xin-guan-xi-zai-zong-jie">3. 核心关系再总结</span><a href="#3-he-xin-guan-xi-zai-zong-jie" class="header-anchor">#</a></h3><ul>
+<li><strong>所有 URL 都是 URI</strong>：因为 URL 也在“标识一个资源”，只不过还额外提供了定位方式。</li>
+<li><strong>不是所有 URI 都是 URL</strong>：像 <code>urn:isbn:...</code> 这种只有“名字”、没有“位置”的标识符，就是 URI 而不是 URL。</li>
+</ul>
+<p>用一句口语化的比喻来记：</p>
+<ul>
+<li><strong>URI 像“能唯一找到某个东西的任何标识”</strong></li>
+<li><strong>URL 像“附带了详细导航信息的那一类标识”</strong></li>
+</ul>
+<h2><span id="shi-me-shi-hou-xu-yao-yan-jin-qu-fen-shi-me-shi-hou-ke-yi-fang-kuan">什么时候需要严谨区分，什么时候可以放宽？</span><a href="#shi-me-shi-hou-xu-yao-yan-jin-qu-fen-shi-me-shi-hou-ke-yi-fang-kuan" class="header-anchor">#</a></h2><h3><span id="1-ri-chang-kai-fa-x2f-wang-ye-di-zhi-chang-jing">1. 日常开发 &#x2F; 网页地址场景</span><a href="#1-ri-chang-kai-fa-x2f-wang-ye-di-zhi-chang-jing" class="header-anchor">#</a></h3><p>在大部分 Web 开发、前端路由、接口地址的语境下，你看到的东西几乎都是 URL，例如：</p>
+<ul>
+<li>页面地址：<code>https://yourdomain.com/posts/1</code></li>
+<li>API 接口：<code>https://api.example.com/v1/users</code></li>
+<li>静态资源：<code>https://static.example.com/logo.png</code></li>
+</ul>
+<p>这些既是 URL，也是 URI。<br><strong>在这种上下文里，即使用 URI&#x2F;URL 混着说，通常也不会造成理解偏差。</strong></p>
+<p>很多框架 API 名字也会混用，比如：</p>
+<ul>
+<li>某些语言里叫 <code>parse_url</code></li>
+<li>某些 HTTP 库里参数名叫 <code>uri</code></li>
+</ul>
+<p>本质上都在处理一个“资源地址字符串”。</p>
+<h3><span id="2-yue-du-gui-fan-x2f-biao-zhun-wen-dang-shi">2. 阅读规范 &#x2F; 标准文档时</span><a href="#2-yue-du-gui-fan-x2f-biao-zhun-wen-dang-shi" class="header-anchor">#</a></h3><p>当你在看 RFC、协议规范、正式标准（如 HTTP 规范）时，就需要稍微严谨一点：</p>
+<ul>
+<li>文档中提到 <strong>URI</strong> 时，强调的是“任意合法的资源标识符字符串”</li>
+<li>文档中如果特意写 <strong>URL</strong>，往往在强调“可以用来定位资源的那一类”</li>
+</ul>
+<p>在这类技术文档里，作者通常是按严格定义在用术语的：</p>
+<ul>
+<li>Request Line 里的 <code>Request-URI</code></li>
+<li>重定向头里的“绝对 URI”</li>
+</ul>
+<p>这时候，把“URI 当成等同 URL”就容易产生歧义。</p>
+<h3><span id="3-she-ji-jie-kou-ku-de-chou-xiang-ceng-ji-shi">3. 设计接口、库的抽象层级时</span><a href="#3-she-ji-jie-kou-ku-de-chou-xiang-ceng-ji-shi" class="header-anchor">#</a></h3><p>如果你在写的是<strong>通用网络库、框架、网关</strong>，而不是单纯写业务代码，这个区别会更重要一些：</p>
+<ul>
+<li>对外暴露的接口参数叫 <code>uri</code>，一般表示“接受更泛化的标识符”</li>
+<li>如果你明确只接受“带协议和主机的完整地址”，就可以叫 <code>url</code></li>
+</ul>
+<p>例如：</p>
+<ul>
+<li>HTTP 客户端：<code>get(url: string)</code> → 你就应当传入一个可以直接访问的 URL</li>
+<li>通用解析器：<code>parseUri(input: string)</code> → 可以同时解析 URL、URN 等多种形式</li>
+</ul>
+<h2><span id="ke-luo-di-de-gui-ze-huo-qing-dan">可落地的规则（或清单）</span><a href="#ke-luo-di-de-gui-ze-huo-qing-dan" class="header-anchor">#</a></h2><ul>
+<li><p><strong>规则 1：记住这一句关系公式</strong></p>
+<ul>
+<li><strong>所有 URL 都是 URI，但并非所有 URI 都是 URL。</strong></li>
+<li>面试被问到时，先把这句话说清楚，再给一个 URN 例子即可。</li>
+</ul>
+</li>
+<li><p><strong>规则 2：日常写业务代码可以偏向用“URL”这个词</strong></p>
+<ul>
+<li>只要场景明显是“网页地址 &#x2F; 接口地址”，说 URL 就够用。</li>
+<li>不必为了显得“更专业”而强行把所有地方都改成 URI。</li>
+</ul>
+</li>
+<li><p><strong>规则 3：写库 &#x2F; 框架或读标准时要更严谨</strong></p>
+<ul>
+<li>API 参数名如果叫 <code>uri</code>，就不要只支持 URL 一种形式。</li>
+<li>阅读规范时，如果出现 URI&#x2F;URL&#x2F;URN 三者并列，要意识到它们是真的在区分概念。</li>
+</ul>
+</li>
+<li><p><strong>规则 4：遇到陌生字符串时先问自己两件事</strong></p>
+<ul>
+<li>它<strong>只是标识</strong>资源，还是也提供了<strong>访问路径和协议</strong>？</li>
+<li>如果有后者，那它就是 URL，同时也是 URI。</li>
+</ul>
+</li>
+</ul>
+<p>如果你把这点区别理顺了，以后再看到“URI&#x2F;URL&#x2F;URN”这样的术语组合，既能在日常开发中轻松使用，也能在需要严谨表述的时候，说得清、讲得明。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2026/02/11/URI%E5%92%8CURL%E7%9A%84%E5%8C%BA%E5%88%AB%E5%88%B0%E5%BA%95%E6%98%AF%E4%BB%80%E4%B9%88/" data-id="cuidePAPAzM3fuYOtKLhif3SD" data-title="URI 和 URL 的区别到底是什么？" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/HTTP/" rel="tag">HTTP</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/URI/" rel="tag">URI</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/URL/" rel="tag">URL</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/" rel="tag">网络基础</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2026/02/11/MIME-%E7%B1%BB%E5%9E%8B%E5%88%B0%E5%BA%95%E6%98%AF%E4%BB%80%E4%B9%88-%E4%B8%80%E6%96%87%E8%AE%B2%E6%B8%85%E5%AE%83%E7%9A%84%E4%BD%9C%E7%94%A8/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">前一篇</strong>
+      <div class="article-nav-title">
+        
+          MIME 类型到底是什么？一文讲清它的作用
+        
+      </div>
+    </a>
+  
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%95%99%E7%A8%8B/">教程</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%BC%96%E7%A8%8B%E5%AE%9E%E8%B7%B5/">编程实践</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/">网络基础</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/ASP-NET-Core/" rel="tag">ASP.NET Core</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/DRY/" rel="tag">DRY</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/FromBody/" rel="tag">FromBody</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/FromForm/" rel="tag">FromForm</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/GitHub-Pages/" rel="tag">GitHub Pages</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/HTTP/" rel="tag">HTTP</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Hexo/" rel="tag">Hexo</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/KISS/" rel="tag">KISS</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MIME/" rel="tag">MIME</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/URI/" rel="tag">URI</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/URL/" rel="tag">URL</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Web-API/" rel="tag">Web API</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Web%E5%BC%80%E5%8F%91/" rel="tag">Web开发</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BB%A3%E7%A0%81%E8%AE%BE%E8%AE%A1/" rel="tag">代码设计</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%86%85%E5%AE%B9%E7%B1%BB%E5%9E%8B/" rel="tag">内容类型</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA/" rel="tag">博客搭建</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%95%99%E7%A8%8B/" rel="tag">教程</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0/" rel="tag">文件上传</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BC%96%E7%A0%81%E5%8E%9F%E5%88%99/" rel="tag">编码原则</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/" rel="tag">网络基础</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/ASP-NET-Core/" style="font-size: 10px;">ASP.NET Core</a> <a href="/tags/DRY/" style="font-size: 10px;">DRY</a> <a href="/tags/FromBody/" style="font-size: 10px;">FromBody</a> <a href="/tags/FromForm/" style="font-size: 10px;">FromForm</a> <a href="/tags/GitHub-Pages/" style="font-size: 10px;">GitHub Pages</a> <a href="/tags/HTTP/" style="font-size: 20px;">HTTP</a> <a href="/tags/Hexo/" style="font-size: 10px;">Hexo</a> <a href="/tags/KISS/" style="font-size: 10px;">KISS</a> <a href="/tags/MIME/" style="font-size: 10px;">MIME</a> <a href="/tags/URI/" style="font-size: 10px;">URI</a> <a href="/tags/URL/" style="font-size: 10px;">URL</a> <a href="/tags/Web-API/" style="font-size: 10px;">Web API</a> <a href="/tags/Web%E5%BC%80%E5%8F%91/" style="font-size: 10px;">Web开发</a> <a href="/tags/%E4%BB%A3%E7%A0%81%E8%AE%BE%E8%AE%A1/" style="font-size: 10px;">代码设计</a> <a href="/tags/%E5%86%85%E5%AE%B9%E7%B1%BB%E5%9E%8B/" style="font-size: 10px;">内容类型</a> <a href="/tags/%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA/" style="font-size: 10px;">博客搭建</a> <a href="/tags/%E6%95%99%E7%A8%8B/" style="font-size: 10px;">教程</a> <a href="/tags/%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0/" style="font-size: 10px;">文件上传</a> <a href="/tags/%E7%BC%96%E7%A0%81%E5%8E%9F%E5%88%99/" style="font-size: 10px;">编码原则</a> <a href="/tags/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/" style="font-size: 10px;">网络基础</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2026/02/">二月 2026</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2026/02/11/ASP.NET-Core-FromForm-%E4%B8%8E-FromBody-%E5%8C%BA%E5%88%AB%E5%92%8C%E5%B8%B8%E8%A7%81%E5%9D%91/">ASP.NET Core 中 FromForm 与 FromBody 的区别和常见坑</a>
+          </li>
+        
+          <li>
+            <a href="/2026/02/11/KISS-%E4%B8%8E-DRY-%E5%9C%A8%E4%BB%A3%E7%A0%81%E4%B8%AD%E7%9A%84%E5%8F%96%E8%88%8D/">KISS 原则有时比 DRY 更重要</a>
+          </li>
+        
+          <li>
+            <a href="/2026/02/11/GitHub-Pages-%E9%9D%99%E6%80%81%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/">GitHub Pages + 静态博客搭建指南</a>
+          </li>
+        
+          <li>
+            <a href="/2026/02/11/MIME-%E7%B1%BB%E5%9E%8B%E5%88%B0%E5%BA%95%E6%98%AF%E4%BB%80%E4%B9%88-%E4%B8%80%E6%96%87%E8%AE%B2%E6%B8%85%E5%AE%83%E7%9A%84%E4%BD%9C%E7%94%A8/">MIME 类型到底是什么？一文讲清它的作用</a>
+          </li>
+        
+          <li>
+            <a href="/2026/02/11/URI%E5%92%8CURL%E7%9A%84%E5%8C%BA%E5%88%AB%E5%88%B0%E5%BA%95%E6%98%AF%E4%BB%80%E4%B9%88/">URI 和 URL 的区别到底是什么？</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2026 kunjianliu<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.6.4.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>

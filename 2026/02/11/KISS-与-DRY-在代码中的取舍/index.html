@@ -6,15 +6,15 @@
   
   <title>KISS 原则有时比 DRY 更重要 | simple focus</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <meta name="description" content="代码首先是 给人看的沟通介质，其次才是给机器执行的指令。KISS（Keep It Simple, Stupid）和 DRY（Don’t Repeat Yourself）都是好原则，但在真实项目里，它们有时会发生冲突——这时，往往应该优先选择简单、好懂的 KISS，而不是一味追求 DRY。 结论先行 一句话结论：当“代码更简单直白”和“代码更抽象更复用”发生冲突时，多数业务场景下应优先 KISS，让">
+  <meta name="description" content="代码首先是 给人看的沟通介质，其次才是给机器执行的指令。KISS（Keep It Simple, Stupid）和 DRY（Don’t Repeat Yourself）都是好原则，但在真实项目里，它们有时会发生冲突——这时，往往应该优先选择简单、好懂的 KISS，而不是一味追求 DRY。      结论先行 背景与问题 核心对比：KISS vs DRY 什么时候优先 KISS 1. 第一次、第二次">
 <meta property="og:type" content="article">
 <meta property="og:title" content="KISS 原则有时比 DRY 更重要">
 <meta property="og:url" content="http://example.com/2026/02/11/KISS-%E4%B8%8E-DRY-%E5%9C%A8%E4%BB%A3%E7%A0%81%E4%B8%AD%E7%9A%84%E5%8F%96%E8%88%8D/index.html">
 <meta property="og:site_name" content="simple focus">
-<meta property="og:description" content="代码首先是 给人看的沟通介质，其次才是给机器执行的指令。KISS（Keep It Simple, Stupid）和 DRY（Don’t Repeat Yourself）都是好原则，但在真实项目里，它们有时会发生冲突——这时，往往应该优先选择简单、好懂的 KISS，而不是一味追求 DRY。 结论先行 一句话结论：当“代码更简单直白”和“代码更抽象更复用”发生冲突时，多数业务场景下应优先 KISS，让">
+<meta property="og:description" content="代码首先是 给人看的沟通介质，其次才是给机器执行的指令。KISS（Keep It Simple, Stupid）和 DRY（Don’t Repeat Yourself）都是好原则，但在真实项目里，它们有时会发生冲突——这时，往往应该优先选择简单、好懂的 KISS，而不是一味追求 DRY。      结论先行 背景与问题 核心对比：KISS vs DRY 什么时候优先 KISS 1. 第一次、第二次">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2026-02-10T16:00:00.000Z">
-<meta property="article:modified_time" content="2026-02-11T08:59:49.901Z">
+<meta property="article:modified_time" content="2026-02-11T14:30:38.646Z">
 <meta property="article:author" content="kunjianliu">
 <meta property="article:tag" content="DRY">
 <meta property="article:tag" content="KISS">
@@ -104,7 +104,44 @@
     <div class="e-content article-entry" itemprop="articleBody">
       
         <p>代码首先是 <strong>给人看的沟通介质</strong>，其次才是给机器执行的指令。KISS（Keep It Simple, Stupid）和 DRY（Don’t Repeat Yourself）都是好原则，但在真实项目里，它们有时会发生冲突——这时，<strong>往往应该优先选择简单、好懂的 KISS，而不是一味追求 DRY。</strong></p>
-<h2 id="结论先行"><a href="#结论先行" class="headerlink" title="结论先行"></a>结论先行</h2><ul>
+<div class="toc">
+
+<!-- toc -->
+
+<ul>
+<li><a href="#jie-lun-xian-xing">结论先行</a></li>
+<li><a href="#bei-jing-yu-wen-ti">背景与问题</a></li>
+<li><a href="#he-xin-dui-bi-kiss-vs-dry">核心对比：KISS vs DRY</a></li>
+<li><a href="#shi-me-shi-hou-you-xian-kiss">什么时候优先 KISS</a><ul>
+<li><a href="#1-di-yi-ci-di-er-ci-xie-chu-lei-si-luo-ji-shi">1. 第一次、第二次写出类似逻辑时</a></li>
+<li><a href="#2-ye-wu-yu-yi-bu-tong-zhi-shi-chang-de-xiang-si">2. 业务语义不同，只是长得相似</a></li>
+<li><a href="#3-tuan-dui-neng-li-ceng-ci-bu-qi-shi">3. 团队能力层次不齐时</a></li>
+<li><a href="#4-diao-shi-pai-zhang-you-xian-de-guan-jian-lu-jing">4. 调试、排障优先的关键路径</a></li>
+<li><a href="#5-lin-shi-dai-ma-yi-ci-xing-jiao-ben">5. 临时代码、一次性脚本</a></li>
+</ul>
+</li>
+<li><a href="#shi-me-shi-hou-you-xian-dry">什么时候优先 DRY</a><ul>
+<li><a href="#1-zhen-zheng-wan-quan-xiang-tong-de-luo-ji">1. 真正完全相同的逻辑</a></li>
+<li><a href="#2-an-quan-he-gui-deng-gao-feng-xian-luo-ji">2. 安全&#x2F;合规等高风险逻辑</a></li>
+<li><a href="#3-fu-za-wen-ding-de-suan-fa">3. 复杂、稳定的算法</a></li>
+<li><a href="#4-yi-jing-bei-duo-ci-yan-zheng-de-wen-ding-chou-xiang">4. 已经被多次验证的稳定抽象</a></li>
+</ul>
+</li>
+<li><a href="#ke-luo-di-de-shi-jian-gui-ze-qing-dan">可落地的实践规则&#x2F;清单</a><ul>
+<li><a href="#gui-ze-1-san-ci-fa-ze">规则 1：三次法则</a></li>
+<li><a href="#gui-ze-2-cong-ju-ti-dao-chou-xiang-er-bu-shi-fan-guo-lai">规则 2：从具体到抽象，而不是反过来</a></li>
+<li><a href="#gui-ze-3-yu-yi-chong-yu-xing-shi">规则 3：语义重于形式</a></li>
+<li><a href="#gui-ze-4-yong-ke-shan-chu-xing-heng-liang-she-ji-hao-pi">规则 4：用“可删除性”衡量设计好坏</a></li>
+<li><a href="#gui-ze-5-jia-she-du-zhe-shi-ban-nian-hou-de-zi-ji-xin-tong-shi">规则 5：假设读者是“半年后的自己 + 新同事”</a></li>
+</ul>
+</li>
+<li><a href="#xiao-jie">小结</a></li>
+</ul>
+<!-- tocstop -->
+
+</div>
+
+<h2><span id="jie-lun-xian-xing">结论先行</span><a href="#jie-lun-xian-xing" class="header-anchor">#</a></h2><ul>
 <li><strong>一句话结论</strong>：当“代码更简单直白”和“代码更抽象更复用”发生冲突时，多数业务场景下应优先 KISS，让代码一眼能看懂，再在不牺牲可读性的前提下追求 DRY。</li>
 <li><strong>适用前提</strong>：<ul>
 <li>代码会被团队多人长期维护，而不是你一个人写完就丢</li>
@@ -113,7 +150,7 @@
 </ul>
 </li>
 </ul>
-<h2 id="背景与问题"><a href="#背景与问题" class="headerlink" title="背景与问题"></a>背景与问题</h2><p>在很多团队中，大家被教育要“消除一切重复、保持优雅抽象”，结果常见几个现象：</p>
+<h2><span id="bei-jing-yu-wen-ti">背景与问题</span><a href="#bei-jing-yu-wen-ti" class="header-anchor">#</a></h2><p>在很多团队中，大家被教育要“消除一切重复、保持优雅抽象”，结果常见几个现象：</p>
 <ul>
 <li>为了避免两三处看起来相似的代码，就设计一套“策略模式 + 工厂 + 配置驱动”的复杂架构</li>
 <li>为了 DRY，把不同业务语义的逻辑硬塞进同一个函数里，只靠参数区分</li>
@@ -126,7 +163,7 @@
 <li>重构成本越来越高，谁都不敢动</li>
 </ul>
 <p>这就是为什么很多有经验的工程师，最终都会回到一句话：<strong>“简单第一，抽象第二。”</strong></p>
-<h2 id="核心对比：KISS-vs-DRY"><a href="#核心对比：KISS-vs-DRY" class="headerlink" title="核心对比：KISS vs DRY"></a>核心对比：KISS vs DRY</h2><ul>
+<h2><span id="he-xin-dui-bi-kiss-vs-dry">核心对比：KISS vs DRY</span><a href="#he-xin-dui-bi-kiss-vs-dry" class="header-anchor">#</a></h2><ul>
 <li><p><strong>KISS：Keep It Simple, Stupid</strong></p>
 <ul>
 <li><strong>目标</strong>：让代码尽量简单、直白、易读易懂</li>
@@ -143,7 +180,7 @@
 </li>
 </ul>
 <p><strong>关键点在于：错误的抽象，比适度的重复更可怕。</strong></p>
-<h2 id="什么时候优先-KISS"><a href="#什么时候优先-KISS" class="headerlink" title="什么时候优先 KISS"></a>什么时候优先 KISS</h2><h3 id="1-第一次、第二次写出类似逻辑时"><a href="#1-第一次、第二次写出类似逻辑时" class="headerlink" title="1. 第一次、第二次写出类似逻辑时"></a>1. 第一次、第二次写出类似逻辑时</h3><p>第一次写代码时，不要为“未来可能的复用”设计一大堆抽象；第二次遇到类似逻辑，也可以先接受少量重复，只要保证：</p>
+<h2><span id="shi-me-shi-hou-you-xian-kiss">什么时候优先 KISS</span><a href="#shi-me-shi-hou-you-xian-kiss" class="header-anchor">#</a></h2><h3><span id="1-di-yi-ci-di-er-ci-xie-chu-lei-si-luo-ji-shi">1. 第一次、第二次写出类似逻辑时</span><a href="#1-di-yi-ci-di-er-ci-xie-chu-lei-si-luo-ji-shi" class="header-anchor">#</a></h3><p>第一次写代码时，不要为“未来可能的复用”设计一大堆抽象；第二次遇到类似逻辑，也可以先接受少量重复，只要保证：</p>
 <ul>
 <li>函数名直接说清楚在干什么</li>
 <li>逻辑没有被莫名其妙地“藏”在框架里</li>
@@ -152,7 +189,7 @@
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">calculate_income_tax</span>(<span class="params">income</span>):</span><br><span class="line">    <span class="keyword">return</span> income * <span class="number">0.15</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">calculate_sales_tax</span>(<span class="params">amount</span>):</span><br><span class="line">    <span class="keyword">return</span> amount * <span class="number">0.08</span></span><br></pre></td></tr></table></figure>
 
 <p>看起来有点“重复”，但<strong>语义不同</strong>（所得税 vs 销售税），未来演化方向也可能完全不一样。此时如果强行抽象成一个 <code>calculate_tax(amount, tax_type)</code>，反而会让代码更难维护。</p>
-<h3 id="2-业务语义不同，只是长得相似"><a href="#2-业务语义不同，只是长得相似" class="headerlink" title="2. 业务语义不同，只是长得相似"></a>2. 业务语义不同，只是长得相似</h3><p>表面相似 ≠ 可以合并。</p>
+<h3><span id="2-ye-wu-yu-yi-bu-tong-zhi-shi-chang-de-xiang-si">2. 业务语义不同，只是长得相似</span><a href="#2-ye-wu-yu-yi-bu-tong-zhi-shi-chang-de-xiang-si" class="header-anchor">#</a></h3><p>表面相似 ≠ 可以合并。</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span> <span class="title function_">sendInvoice</span><span class="params">(Invoice invoice)</span> &#123; ... &#125;  <span class="comment">// 财务流程</span></span><br><span class="line"><span class="keyword">void</span> <span class="title function_">sendEmail</span><span class="params">(Email email)</span> &#123; ... &#125;        <span class="comment">// 通信流程</span></span><br><span class="line"><span class="keyword">void</span> <span class="title function_">sendPacket</span><span class="params">(Packet packet)</span> &#123; ... &#125;     <span class="comment">// 网络传输</span></span><br></pre></td></tr></table></figure>
 
 <p>这三个函数虽然都叫“send”，但业务完全不同，强行抽象成一个 <code>send(Object payload, SendType type)</code>：</p>
@@ -161,26 +198,26 @@
 <li>任何一个流程的修改，都可能影响到其他流程</li>
 </ul>
 <p>这种情况下，<strong>保持三个清晰的函数，比一个“超级通用 send”要健康得多。</strong></p>
-<h3 id="3-团队能力层次不齐时"><a href="#3-团队能力层次不齐时" class="headerlink" title="3. 团队能力层次不齐时"></a>3. 团队能力层次不齐时</h3><p>如果团队里有新人、有转岗同事，或者外包、实习生也会接触这份代码：</p>
+<h3><span id="3-tuan-dui-neng-li-ceng-ci-bu-qi-shi">3. 团队能力层次不齐时</span><a href="#3-tuan-dui-neng-li-ceng-ci-bu-qi-shi" class="header-anchor">#</a></h3><p>如果团队里有新人、有转岗同事，或者外包、实习生也会接触这份代码：</p>
 <ul>
 <li>过于“聪明”的抽象，只会变成少数人的“特权”</li>
 <li>简单直白的代码，才是全员都能理解和维护的资产</li>
 </ul>
 <p><strong>代码不是用来展示智商的，而是用来降低团队总认知成本的。</strong></p>
-<h3 id="4-调试、排障优先的关键路径"><a href="#4-调试、排障优先的关键路径" class="headerlink" title="4. 调试、排障优先的关键路径"></a>4. 调试、排障优先的关键路径</h3><p>例如支付、下单、风控等核心流程，一旦出问题需要快速定位。此时：</p>
+<h3><span id="4-diao-shi-pai-zhang-you-xian-de-guan-jian-lu-jing">4. 调试、排障优先的关键路径</span><a href="#4-diao-shi-pai-zhang-you-xian-de-guan-jian-lu-jing" class="header-anchor">#</a></h3><p>例如支付、下单、风控等核心流程，一旦出问题需要快速定位。此时：</p>
 <ul>
 <li>KISS 风格的代码：从异常栈一跳就能看到真实业务逻辑</li>
 <li>过度 DRY 的代码：需要在策略、工厂、适配层之间来回跳转</li>
 </ul>
 <p>在这些地方，多写几行重复代码，往往比引入一层新的抽象更划算。</p>
-<h3 id="5-临时代码、一次性脚本"><a href="#5-临时代码、一次性脚本" class="headerlink" title="5. 临时代码、一次性脚本"></a>5. 临时代码、一次性脚本</h3><p>例如：</p>
+<h3><span id="5-lin-shi-dai-ma-yi-ci-xing-jiao-ben">5. 临时代码、一次性脚本</span><a href="#5-lin-shi-dai-ma-yi-ci-xing-jiao-ben" class="header-anchor">#</a></h3><p>例如：</p>
 <ul>
 <li>一次性数据迁移脚本</li>
 <li>单次活动的统计脚本</li>
 </ul>
 <p>这类代码生命周期很短，重点是“正确而清晰”，而不是“优雅而通用”。为它们设计复杂抽象，几乎肯定是在浪费时间。</p>
-<h2 id="什么时候优先-DRY"><a href="#什么时候优先-DRY" class="headerlink" title="什么时候优先 DRY"></a>什么时候优先 DRY</h2><p>当然，DRY 依然非常重要，只是需要用在 <strong>真的合适的地方</strong>。</p>
-<h3 id="1-真正完全相同的逻辑"><a href="#1-真正完全相同的逻辑" class="headerlink" title="1. 真正完全相同的逻辑"></a>1. 真正完全相同的逻辑</h3><p>典型如：</p>
+<h2><span id="shi-me-shi-hou-you-xian-dry">什么时候优先 DRY</span><a href="#shi-me-shi-hou-you-xian-dry" class="header-anchor">#</a></h2><p>当然，DRY 依然非常重要，只是需要用在 <strong>真的合适的地方</strong>。</p>
+<h3><span id="1-zhen-zheng-wan-quan-xiang-tong-de-luo-ji">1. 真正完全相同的逻辑</span><a href="#1-zhen-zheng-wan-quan-xiang-tong-de-luo-ji" class="header-anchor">#</a></h3><p>典型如：</p>
 <ul>
 <li>价格计算规则</li>
 <li>折扣计算逻辑</li>
@@ -191,27 +228,27 @@
 <li>抽到一个明确命名的函数&#x2F;模块中</li>
 <li>保证修改只需要在一个地方进行</li>
 </ul>
-<h3 id="2-安全-合规等高风险逻辑"><a href="#2-安全-合规等高风险逻辑" class="headerlink" title="2. 安全&#x2F;合规等高风险逻辑"></a>2. 安全&#x2F;合规等高风险逻辑</h3><p>如：</p>
+<h3><span id="2-an-quan-x2f-he-gui-deng-gao-feng-xian-luo-ji">2. 安全&#x2F;合规等高风险逻辑</span><a href="#2-an-quan-x2f-he-gui-deng-gao-feng-xian-luo-ji" class="header-anchor">#</a></h3><p>如：</p>
 <ul>
 <li>加解密算法</li>
 <li>认证、授权</li>
 <li>风控规则</li>
 </ul>
 <p>这些逻辑一旦出问题，影响巨大，<strong>必须单点维护</strong>，坚决不能复制粘贴到各个角落。</p>
-<h3 id="3-复杂、稳定的算法"><a href="#3-复杂、稳定的算法" class="headerlink" title="3. 复杂、稳定的算法"></a>3. 复杂、稳定的算法</h3><p>例如推荐算法、路径规划算法、通用缓存封装等：</p>
+<h3><span id="3-fu-za-wen-ding-de-suan-fa">3. 复杂、稳定的算法</span><a href="#3-fu-za-wen-ding-de-suan-fa" class="header-anchor">#</a></h3><p>例如推荐算法、路径规划算法、通用缓存封装等：</p>
 <ul>
 <li>本身就不容易理解</li>
 <li>又需要在多处使用</li>
 </ul>
 <p>这类逻辑非常适合用 DRY 固化成“黑盒能力”，对外只暴露清晰的接口。</p>
-<h3 id="4-已经被多次验证的稳定抽象"><a href="#4-已经被多次验证的稳定抽象" class="headerlink" title="4. 已经被多次验证的稳定抽象"></a>4. 已经被多次验证的稳定抽象</h3><p>当你的项目发展到一定阶段，有些模式已经被事实证明是合适、稳定的，例如：</p>
+<h3><span id="4-yi-jing-bei-duo-ci-yan-zheng-de-wen-ding-chou-xiang">4. 已经被多次验证的稳定抽象</span><a href="#4-yi-jing-bei-duo-ci-yan-zheng-de-wen-ding-chou-xiang" class="header-anchor">#</a></h3><p>当你的项目发展到一定阶段，有些模式已经被事实证明是合适、稳定的，例如：</p>
 <ul>
 <li>统一的错误处理封装</li>
 <li>标准化的接口返回结构</li>
 <li>通用的日志埋点工具</li>
 </ul>
 <p>此时把这些抽象提炼出来并复用，是非常值得的投资。</p>
-<h2 id="可落地的实践规则-清单"><a href="#可落地的实践规则-清单" class="headerlink" title="可落地的实践规则&#x2F;清单"></a>可落地的实践规则&#x2F;清单</h2><h3 id="规则-1：三次法则"><a href="#规则-1：三次法则" class="headerlink" title="规则 1：三次法则"></a>规则 1：三次法则</h3><ul>
+<h2><span id="ke-luo-di-de-shi-jian-gui-ze-x2f-qing-dan">可落地的实践规则&#x2F;清单</span><a href="#ke-luo-di-de-shi-jian-gui-ze-x2f-qing-dan" class="header-anchor">#</a></h2><h3><span id="gui-ze-1-san-ci-fa-ze">规则 1：三次法则</span><a href="#gui-ze-1-san-ci-fa-ze" class="header-anchor">#</a></h3><ul>
 <li><strong>第一次</strong>：直接写最简单的代码，优先让自己和同事看懂</li>
 <li><strong>第二次</strong>：遇到类似需求时，可以复制并稍加调整，同时在脑海中记一下“这里可能存在共性”</li>
 <li><strong>第三次</strong>：再次遇到类似场景时，认真评估是否抽象、抽象到什么程度</li>
@@ -219,14 +256,14 @@
 <blockquote>
 <p>如果你只见过两次类似代码就急着抽象，十有八九会抽象错。</p>
 </blockquote>
-<h3 id="规则-2：从具体到抽象，而不是反过来"><a href="#规则-2：从具体到抽象，而不是反过来" class="headerlink" title="规则 2：从具体到抽象，而不是反过来"></a>规则 2：从具体到抽象，而不是反过来</h3><p>建议的演进路径是：</p>
+<h3><span id="gui-ze-2-cong-ju-ti-dao-chou-xiang-er-bu-shi-fan-guo-lai">规则 2：从具体到抽象，而不是反过来</span><a href="#gui-ze-2-cong-ju-ti-dao-chou-xiang-er-bu-shi-fan-guo-lai" class="header-anchor">#</a></h3><p>建议的演进路径是：</p>
 <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">具体实现 1 → 具体实现 2 → 识别真正共性 → 抽象成适度的公共能力</span><br></pre></td></tr></table></figure>
 
 <p>而不是：</p>
 <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">先想象一个“通用框架” → 再强行把所有需求塞进这个框架</span><br></pre></td></tr></table></figure>
 
 <p>后者几乎一定会走向过度设计。</p>
-<h3 id="规则-3：语义重于形式"><a href="#规则-3：语义重于形式" class="headerlink" title="规则 3：语义重于形式"></a>规则 3：语义重于形式</h3><ul>
+<h3><span id="gui-ze-3-yu-yi-chong-yu-xing-shi">规则 3：语义重于形式</span><a href="#gui-ze-3-yu-yi-chong-yu-xing-shi" class="header-anchor">#</a></h3><ul>
 <li>看起来很像的代码，如果<strong>业务语义不同</strong>，就不要为 DRY 而合并</li>
 <li>函数名、参数名、模块名要尽量反映真实业务，而不是追求所谓的“通用性”</li>
 </ul>
@@ -236,12 +273,12 @@
 <p>也不要硬塞进一个：</p>
 <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">createDocument</span>(<span class="params">type</span>) &#123; ... &#125;</span><br></pre></td></tr></table></figure>
 
-<h3 id="规则-4：用“可删除性”衡量设计好坏"><a href="#规则-4：用“可删除性”衡量设计好坏" class="headerlink" title="规则 4：用“可删除性”衡量设计好坏"></a>规则 4：用“可删除性”衡量设计好坏</h3><p>问自己一个问题：<strong>“如果哪天业务变了，这块代码能不能比较轻松地被删除或替换？”</strong></p>
+<h3><span id="gui-ze-4-yong-ke-shan-chu-xing-heng-liang-she-ji-hao-pi">规则 4：用“可删除性”衡量设计好坏</span><a href="#gui-ze-4-yong-ke-shan-chu-xing-heng-liang-she-ji-hao-pi" class="header-anchor">#</a></h3><p>问自己一个问题：<strong>“如果哪天业务变了，这块代码能不能比较轻松地被删除或替换？”</strong></p>
 <ul>
 <li>如果一段代码和周围高度耦合、牵一发而动全身，往往说明抽象层级太复杂</li>
 <li>好的 KISS 风格代码，删除一块通常只影响很小的范围</li>
 </ul>
-<h3 id="规则-5：假设读者是“半年后的自己-新同事”"><a href="#规则-5：假设读者是“半年后的自己-新同事”" class="headerlink" title="规则 5：假设读者是“半年后的自己 + 新同事”"></a>规则 5：假设读者是“半年后的自己 + 新同事”</h3><p>写代码时不妨这样假想：</p>
+<h3><span id="gui-ze-5-jia-she-du-zhe-shi-ban-nian-hou-de-zi-ji-xin-tong-shi">规则 5：假设读者是“半年后的自己 + 新同事”</span><a href="#gui-ze-5-jia-she-du-zhe-shi-ban-nian-hou-de-zi-ji-xin-tong-shi" class="header-anchor">#</a></h3><p>写代码时不妨这样假想：</p>
 <ul>
 <li>半年后，你已经忘了这个需求的细节</li>
 <li>新来一个同事要接这个模块</li>
@@ -252,7 +289,7 @@
 <li>是否需要在 4、5 个文件之间来回跳转才能拼出全景？</li>
 </ul>
 <p>如果答案不好，通常意味着当前的抽象过头了。</p>
-<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><ul>
+<h2><span id="xiao-jie">小结</span><a href="#xiao-jie" class="header-anchor">#</a></h2><ul>
 <li><strong>KISS 和 DRY 都很重要，但它们不是同一优先级。</strong></li>
 <li>在绝大多数业务场景下：<ul>
 <li><strong>先保证简单、直白、易懂（KISS）</strong></li>
@@ -266,7 +303,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://example.com/2026/02/11/KISS-%E4%B8%8E-DRY-%E5%9C%A8%E4%BB%A3%E7%A0%81%E4%B8%AD%E7%9A%84%E5%8F%96%E8%88%8D/" data-id="cuidovSrw1QZUBiB4PkC0xMnO" data-title="KISS 原则有时比 DRY 更重要" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="http://example.com/2026/02/11/KISS-%E4%B8%8E-DRY-%E5%9C%A8%E4%BB%A3%E7%A0%81%E4%B8%AD%E7%9A%84%E5%8F%96%E8%88%8D/" data-id="cuid47HIjyzZVS0k3tggA-ypr" data-title="KISS 原则有时比 DRY 更重要" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -278,15 +315,20 @@
     
 <nav id="article-nav">
   
-    <a href="/2026/02/11/GitHub-Pages-%E9%9D%99%E6%80%81%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/" id="article-nav-newer" class="article-nav-link-wrap">
+    <a href="/2026/02/11/ASP.NET-Core-FromForm-%E4%B8%8E-FromBody-%E5%8C%BA%E5%88%AB%E5%92%8C%E5%B8%B8%E8%A7%81%E5%9D%91/" id="article-nav-newer" class="article-nav-link-wrap">
       <strong class="article-nav-caption">前一篇</strong>
       <div class="article-nav-title">
         
-          GitHub Pages + 静态博客搭建指南
+          ASP.NET Core 中 FromForm 与 FromBody 的区别和常见坑
         
       </div>
     </a>
   
+  
+    <a href="/2026/02/11/GitHub-Pages-%E9%9D%99%E6%80%81%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">后一篇</strong>
+      <div class="article-nav-title">GitHub Pages + 静态博客搭建指南</div>
+    </a>
   
 </nav>
 
@@ -302,7 +344,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">分类</h3>
     <div class="widget">
-      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%95%99%E7%A8%8B/">教程</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%BC%96%E7%A8%8B%E5%AE%9E%E8%B7%B5/">编程实践</a></li></ul>
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%95%99%E7%A8%8B/">教程</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%BC%96%E7%A8%8B%E5%AE%9E%E8%B7%B5/">编程实践</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/">网络基础</a></li></ul>
     </div>
   </div>
 
@@ -312,7 +354,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">标签</h3>
     <div class="widget">
-      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/DRY/" rel="tag">DRY</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/GitHub-Pages/" rel="tag">GitHub Pages</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Hexo/" rel="tag">Hexo</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/KISS/" rel="tag">KISS</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BB%A3%E7%A0%81%E8%AE%BE%E8%AE%A1/" rel="tag">代码设计</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA/" rel="tag">博客搭建</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%95%99%E7%A8%8B/" rel="tag">教程</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BC%96%E7%A0%81%E5%8E%9F%E5%88%99/" rel="tag">编码原则</a></li></ul>
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/ASP-NET-Core/" rel="tag">ASP.NET Core</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/DRY/" rel="tag">DRY</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/FromBody/" rel="tag">FromBody</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/FromForm/" rel="tag">FromForm</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/GitHub-Pages/" rel="tag">GitHub Pages</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/HTTP/" rel="tag">HTTP</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Hexo/" rel="tag">Hexo</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/KISS/" rel="tag">KISS</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MIME/" rel="tag">MIME</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/URI/" rel="tag">URI</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/URL/" rel="tag">URL</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Web-API/" rel="tag">Web API</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Web%E5%BC%80%E5%8F%91/" rel="tag">Web开发</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BB%A3%E7%A0%81%E8%AE%BE%E8%AE%A1/" rel="tag">代码设计</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%86%85%E5%AE%B9%E7%B1%BB%E5%9E%8B/" rel="tag">内容类型</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA/" rel="tag">博客搭建</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%95%99%E7%A8%8B/" rel="tag">教程</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0/" rel="tag">文件上传</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BC%96%E7%A0%81%E5%8E%9F%E5%88%99/" rel="tag">编码原则</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/" rel="tag">网络基础</a></li></ul>
     </div>
   </div>
 
@@ -322,7 +364,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">标签云</h3>
     <div class="widget tagcloud">
-      <a href="/tags/DRY/" style="font-size: 10px;">DRY</a> <a href="/tags/GitHub-Pages/" style="font-size: 10px;">GitHub Pages</a> <a href="/tags/Hexo/" style="font-size: 10px;">Hexo</a> <a href="/tags/KISS/" style="font-size: 10px;">KISS</a> <a href="/tags/%E4%BB%A3%E7%A0%81%E8%AE%BE%E8%AE%A1/" style="font-size: 10px;">代码设计</a> <a href="/tags/%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA/" style="font-size: 10px;">博客搭建</a> <a href="/tags/%E6%95%99%E7%A8%8B/" style="font-size: 10px;">教程</a> <a href="/tags/%E7%BC%96%E7%A0%81%E5%8E%9F%E5%88%99/" style="font-size: 10px;">编码原则</a>
+      <a href="/tags/ASP-NET-Core/" style="font-size: 10px;">ASP.NET Core</a> <a href="/tags/DRY/" style="font-size: 10px;">DRY</a> <a href="/tags/FromBody/" style="font-size: 10px;">FromBody</a> <a href="/tags/FromForm/" style="font-size: 10px;">FromForm</a> <a href="/tags/GitHub-Pages/" style="font-size: 10px;">GitHub Pages</a> <a href="/tags/HTTP/" style="font-size: 20px;">HTTP</a> <a href="/tags/Hexo/" style="font-size: 10px;">Hexo</a> <a href="/tags/KISS/" style="font-size: 10px;">KISS</a> <a href="/tags/MIME/" style="font-size: 10px;">MIME</a> <a href="/tags/URI/" style="font-size: 10px;">URI</a> <a href="/tags/URL/" style="font-size: 10px;">URL</a> <a href="/tags/Web-API/" style="font-size: 10px;">Web API</a> <a href="/tags/Web%E5%BC%80%E5%8F%91/" style="font-size: 10px;">Web开发</a> <a href="/tags/%E4%BB%A3%E7%A0%81%E8%AE%BE%E8%AE%A1/" style="font-size: 10px;">代码设计</a> <a href="/tags/%E5%86%85%E5%AE%B9%E7%B1%BB%E5%9E%8B/" style="font-size: 10px;">内容类型</a> <a href="/tags/%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA/" style="font-size: 10px;">博客搭建</a> <a href="/tags/%E6%95%99%E7%A8%8B/" style="font-size: 10px;">教程</a> <a href="/tags/%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0/" style="font-size: 10px;">文件上传</a> <a href="/tags/%E7%BC%96%E7%A0%81%E5%8E%9F%E5%88%99/" style="font-size: 10px;">编码原则</a> <a href="/tags/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/" style="font-size: 10px;">网络基础</a>
     </div>
   </div>
 
@@ -344,11 +386,23 @@
       <ul>
         
           <li>
-            <a href="/2026/02/11/GitHub-Pages-%E9%9D%99%E6%80%81%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/">GitHub Pages + 静态博客搭建指南</a>
+            <a href="/2026/02/11/ASP.NET-Core-FromForm-%E4%B8%8E-FromBody-%E5%8C%BA%E5%88%AB%E5%92%8C%E5%B8%B8%E8%A7%81%E5%9D%91/">ASP.NET Core 中 FromForm 与 FromBody 的区别和常见坑</a>
           </li>
         
           <li>
             <a href="/2026/02/11/KISS-%E4%B8%8E-DRY-%E5%9C%A8%E4%BB%A3%E7%A0%81%E4%B8%AD%E7%9A%84%E5%8F%96%E8%88%8D/">KISS 原则有时比 DRY 更重要</a>
+          </li>
+        
+          <li>
+            <a href="/2026/02/11/GitHub-Pages-%E9%9D%99%E6%80%81%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/">GitHub Pages + 静态博客搭建指南</a>
+          </li>
+        
+          <li>
+            <a href="/2026/02/11/MIME-%E7%B1%BB%E5%9E%8B%E5%88%B0%E5%BA%95%E6%98%AF%E4%BB%80%E4%B9%88-%E4%B8%80%E6%96%87%E8%AE%B2%E6%B8%85%E5%AE%83%E7%9A%84%E4%BD%9C%E7%94%A8/">MIME 类型到底是什么？一文讲清它的作用</a>
+          </li>
+        
+          <li>
+            <a href="/2026/02/11/URI%E5%92%8CURL%E7%9A%84%E5%8C%BA%E5%88%AB%E5%88%B0%E5%BA%95%E6%98%AF%E4%BB%80%E4%B9%88/">URI 和 URL 的区别到底是什么？</a>
           </li>
         
       </ul>
