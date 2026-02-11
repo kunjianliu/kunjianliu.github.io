@@ -904,6 +904,56 @@ a.article-title:hover {
   max-width: 100%;
   margin: 0 auto;
 }
+.article-entry .toc {
+  font-size: 0.9em;
+  line-height: 1.6;
+  margin: 1.5em 0;
+  padding: 0.75em 1em;
+  border-left: 3px solid #ddd;
+  background: #f8f8f8;
+}
+.article-entry .toc:before {
+  content: "目录";
+  display: block;
+  font-weight: bold;
+  margin-bottom: 0.5em;
+}
+.article-entry .toc ul {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+.article-entry .toc > ul > li {
+  margin: 4px 0;
+  padding-left: 6px;
+  border-left: 2px solid #e0e0e0;
+}
+.article-entry .toc ul ul {
+  margin-top: 2px;
+  margin-left: 12px;
+  font-size: 0.9em;
+}
+.article-entry .toc ul ul ul {
+  margin-left: 16px;
+  font-size: 0.85em;
+}
+.article-entry .toc a {
+  text-decoration: none;
+}
+.article-entry .toc a:hover {
+  text-decoration: underline;
+}
+@media screen and (min-width: 768px) {
+  .article-entry .toc {
+    position: fixed;
+    top: 260px;
+    left: 35px;
+    width: 230px;
+    max-height: 70%;
+    overflow: auto;
+    margin: 0;
+  }
+}
 #comments {
   background: #fff;
   -webkit-box-shadow: 1px 2px 3px #ddd;
